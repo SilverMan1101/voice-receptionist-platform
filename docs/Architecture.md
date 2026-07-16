@@ -34,7 +34,7 @@ flowchart TD
     AdminPortal[Admin Portal / API] --> ConfigService[Tenant Config Service]
     AdminPortal --> KnowledgeAPI[Knowledge Management Service]
     KnowledgeAPI --> Indexer[Ingestion & Embedding Pipeline]
-    Indexer --> VectorDB[(Vector DB - Qdrant/FAISS)]
+    Indexer --> VectorDB[(Vector DB - Qdrant)]
     Retrieval --> VectorDB
     ConfigService --> PostgreSQL[(PostgreSQL)]
     Analytics --> PostgreSQL
@@ -119,7 +119,7 @@ ai-receptionist-platform/
 | ORM | SQLAlchemy | With Alembic for migrations |
 | Primary datastore | PostgreSQL | Tenant config, transcripts, analytics, metadata |
 | Cache / ephemeral state | Redis | Per-call state, session data, rate limiting |
-| Vector database | FAISS (dev) → Qdrant (prod) | Per-tenant namespace/collection isolation |
+| Vector database | Qdrant | Per-tenant namespace/collection isolation |
 | LLM providers | OpenAI / Gemini / Claude via adapter interface | Swappable per tenant or globally |
 | STT | Whisper or Deepgram | Adapter interface |
 | TTS | OpenAI TTS or ElevenLabs | Adapter interface |
@@ -245,7 +245,7 @@ erDiagram
     }
 ```
 
-> **Note:** Vector embeddings themselves are stored in Qdrant/FAISS, not PostgreSQL; `KNOWLEDGE_CHUNK.vector_ref` is a pointer/ID into the vector store.
+> **Note:** Vector embeddings themselves are stored in Qdrant, not PostgreSQL; `KNOWLEDGE_CHUNK.vector_ref` is a pointer/ID into the vector store.
 
 ## 6. API Design (Representative — not exhaustive)
 
