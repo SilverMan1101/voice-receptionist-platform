@@ -143,6 +143,4 @@ When an AI assistant (this one or a future one) works on this project, it must:
 
 ## 17. Open Questions
 
-- RQ-1: What is the required test coverage threshold for merges to `main`?
-- RQ-2: Is a `develop` integration branch needed, or is trunk-based development (direct feature-branch → `main`) preferred given team size?
-- RQ-3: What code review policy (number of approvals, required reviewers) applies?
+- *(All Phase 0 CI/Branching questions have been resolved; see Memory.md Key Decisions).*

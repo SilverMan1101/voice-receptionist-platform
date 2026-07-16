@@ -20,7 +20,7 @@
 | ORM | SQLAlchemy + Alembic |
 | Primary DB | PostgreSQL |
 | Cache/session store | Redis |
-| Vector DB | FAISS (dev) → Qdrant (production) |
+| Vector DB | Qdrant |
 | LLM strategy | Provider-agnostic adapter layer over OpenAI / Gemini / Claude |
 | STT | Adapter over Whisper or Deepgram |
 | TTS | Adapter over OpenAI TTS or ElevenLabs |
@@ -30,6 +30,9 @@
 | Control authority | **Conversation Engine controls the app; the LLM only reasons/generates language, never directly triggers side effects** — this is a hard architectural rule, not a preference |
 | Knowledge grounding policy | No hallucinated organizational facts, ever. Below-confidence retrieval → graceful fallback + escalation, never a guess |
 | Multi-tenancy | Logical isolation per tenant across DB, vector store, and object storage; zero org-specific code branches allowed |
+| Branch Strategy | Trunk-based, feature branches merge directly to main via PR (no develop branch) |
+| Code Review | Solo dev: PR + self-review. If team expands: 1 approval required |
+| Test Coverage | CI reports coverage; no hard fail threshold yet (revisit end of Phase 2, target ~75-80%) |
 
 ## 3. Architecture Decisions
 
@@ -42,7 +45,7 @@
 ## 4. Technology Choices — Rationale Notes
 
 - FastAPI chosen for async-first support, essential given the streaming nature of STT/TTS/LLM I/O on the live call path.
-- FAISS→Qdrant progression: FAISS is simple for local dev; Qdrant supports production-grade multi-tenant collection isolation and scaling.
+- Qdrant: Supports production-grade multi-tenant collection isolation and scaling. Used uniformly across dev and prod.
 - Event Bus starts as Redis Streams (MVP simplicity) with a documented graduation path to Kafka/RabbitMQ under higher throughput — not yet needed at MVP scale.
 
 ## 5. Business Rules (Core, Non-Negotiable)
@@ -92,7 +95,6 @@
 - Confidence-scoring mechanism for escalation (`PRD.md` OQ-6).
 - Kubernetes migration threshold (`Architecture.md` AQ-1).
 - Secrets management tooling (`Architecture.md` AQ-4).
-- Test coverage threshold and branch strategy details (`Rules.md` RQ-1, RQ-2).
 - Concurrent call load target for hardening phase (`Phases.md` PQ-1).
 - Brand identity finalization (`Design.md` DQ-1).
 

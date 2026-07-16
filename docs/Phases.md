@@ -10,7 +10,7 @@
 
 **Deliverables:**
 - Monorepo scaffolded per `Architecture.md` §3 folder structure.
-- Docker Compose environment (Postgres, Redis, FAISS/Qdrant dev instance).
+- Docker Compose environment (Postgres, Redis, Qdrant dev instance).
 - CI pipeline skeleton (lint, test, build stages).
 - `shared-kernel` with core domain types (Organization, Call, KnowledgeDocument stubs).
 - Base FastAPI service template with health-check endpoint, structured logging, OpenTelemetry wiring.
@@ -60,7 +60,7 @@
 - [ ] Design and migrate core schema (Organization, Department, KnowledgeDocument, BusinessRule, VoiceConfig).
 - [ ] Build document parsers for each supported format.
 - [ ] Build chunking + embedding pipeline.
-- [ ] Integrate FAISS (dev) with per-tenant namespace isolation.
+- [ ] Integrate Qdrant with per-tenant namespace isolation.
 - [ ] Build retrieval API with confidence scoring.
 - [ ] Build tenant-scoped auth (JWT, RBAC roles per `Architecture.md` §8).
 - [ ] Write isolation tests (cross-tenant leakage checks).
