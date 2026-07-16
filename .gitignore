@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Node / Admin Portal
+node_modules/
+.next/
+dist/
+build/
+.turbo/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Docker
+docker-compose.override.yml
+
+# Vector DB / data
+*.faiss
+qdrant_storage/
+data/
+
+# Logs
+*.log
+logs/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Antigravity / agent artifacts (keep plans out of history unless you want them tracked)
+.antigravity/
