@@ -4,3 +4,11 @@ pydantic>=2.3.0
 httpx>=0.25.0
 pytest>=7.4.2
 pytest-cov>=4.1.0
+sqlalchemy>=2.0.0
+psycopg2-binary
+qdrant-client
+langchain-community
+openai
+PyJWT
+pypdfpython-multipart
+email-validator

@@ -33,6 +33,10 @@
 | Branch Strategy | Trunk-based, feature branches merge directly to main via PR (no develop branch) |
 | Code Review | Solo dev: PR + self-review. If team expands: 1 approval required |
 | Test Coverage | CI reports coverage; no hard fail threshold yet (revisit end of Phase 2, target ~75-80%) |
+| Embedding Models | Swappable adapter interface, defaults to OpenAI text-embedding-3-small |
+| Confidence Scoring | MVP uses Qdrant raw vector cosine similarity score with configurable per-tenant threshold |
+| Auth Service | Uses a custom JWT implementation instead of a managed provider (e.g. Auth0) for the MVP |
+| Knowledge Publishing | Documents go live immediately upon successful indexing without a human-in-the-loop approval gate (Resolves OQ-7) |
 
 ## 3. Architecture Decisions
 
@@ -45,7 +49,7 @@
 ## 4. Technology Choices — Rationale Notes
 
 - FastAPI chosen for async-first support, essential given the streaming nature of STT/TTS/LLM I/O on the live call path.
-- Qdrant: Supports production-grade multi-tenant collection isolation and scaling. Used uniformly across dev and prod.
+- Qdrant: Supports production-grade scaling. Multi-tenancy enforced via payload filtering (logical isolation) rather than separate collections, ensuring simpler management for many small tenants.
 - Event Bus starts as Redis Streams (MVP simplicity) with a documented graduation path to Kafka/RabbitMQ under higher throughput — not yet needed at MVP scale.
 
 ## 5. Business Rules (Core, Non-Negotiable)
@@ -82,7 +86,6 @@
 ## 8. Known Issues / Risks to Track
 
 - No telephony provider chosen yet — blocks Phase 3 start.
-- No confirmed confidence-scoring mechanism for "escalate due to low confidence" — needs a decision before Phase 2 is complete.
 - Legal/consent requirements for call recording vary by jurisdiction and are not yet researched per target region.
 - Billing/pricing model for tenants is undefined.
 - Brand identity (colors, typeface, logo) undefined — `Design.md` uses placeholder tokens.
@@ -92,7 +95,6 @@
 - Telephony provider selection (`PRD.md` OQ-1, `Architecture.md` AQ-2).
 - Initial language set beyond English (`PRD.md` OQ-2).
 - Warm transfer requirement at MVP vs. later (`PRD.md` OQ-5).
-- Confidence-scoring mechanism for escalation (`PRD.md` OQ-6).
 - Kubernetes migration threshold (`Architecture.md` AQ-1).
 - Secrets management tooling (`Architecture.md` AQ-4).
 - Concurrent call load target for hardening phase (`Phases.md` PQ-1).
@@ -133,6 +135,8 @@ All assumptions are individually labeled with an ID (A1–A5 in `PRD.md`) or cal
 
 ## 14. Important Context From Previous Discussions
 
+- **Phase 1 Unit Testing (July 2026):** Both `tenant_config_service` and `knowledge_service` have fully functioning unit and integration test suites, with Qdrant successfully mocked in unit tests and passing real integration tests. All dependencies (like python-multipart, pytest-dotenv) are properly documented. `OPENAI_API_KEY` is sourced from `.env.local`.
+- **Routing standardization:** `tenant_config_service` routes for sub-resources (departments, voice-configs, business-rules) are strictly mounted under `/api/v1/organizations/{org_id}/...`.
 - The original project brief was provided as a single detailed document (v1 vision) and used as the **sole source of truth** for generating the full documentation set (`PRD.md`, `Architecture.md`, `Rules.md`, `Phases.md`, `Design.md`, `Memory.md`) in this session.
 - All six documents were generated together in one pass, cross-checked for internal consistency (terminology, phase-to-architecture alignment, design-to-PRD alignment).
 - Any assumption made beyond the original brief is explicitly labeled as such in the relevant document — future sessions should treat unlabeled statements as either directly sourced from the brief or a documented decision, not implicit assumptions.

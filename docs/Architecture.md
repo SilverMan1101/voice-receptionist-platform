@@ -52,6 +52,8 @@ flowchart TD
 | **LLM Adapter Layer** | Uniform interface over OpenAI/Gemini/Claude for reasoning and response generation; supports function/tool calling and structured outputs. |
 | **Knowledge Retrieval Service (RAG)** | Embeds queries, performs vector search scoped to the tenant, returns ranked context chunks with source citations and confidence scores. |
 | **Ingestion & Embedding Pipeline** | Parses uploaded documents (PDF/DOCX/TXT/MD/CSV/XLSX/JSON/URLs), chunks, embeds, writes to the tenant's vector namespace; re-indexes on update/delete. |
+| **Embedding Adapter** | Swappable interface (`libs/embedding_adapters`) to interact with models like OpenAI `text-embedding-3-small`. |
+| **Document Parser Adapter** | Swappable interface (`libs/document_parsers`) parsing documents into chunkable text formats. |
 | **Business Rules Engine** | Tenant-configured rules: escalation triggers, operating hours, department routing, data-collection requirements. Declarative, not hardcoded per tenant. |
 | **Escalation Service** | Executes transfer logic (warm/cold), notifies human staff, packages call summary for handoff. |
 | **Text-to-Speech (TTS) Service** | Converts engine output text to streamed audio. Provider-agnostic adapter (OpenAI TTS, ElevenLabs). |
@@ -75,26 +77,29 @@ ai-receptionist-platform/
 │   ├── admin-portal/                # Frontend web app (React/Next.js — see Design.md)
 │   └── voice-runtime/                # Real-time call handling process(es)
 ├── services/
-│   ├── conversation-engine/
+│   ├── conversation_engine/
 │   │   ├── domain/                   # Entities, value objects, business rules (DDD)
 │   │   ├── application/              # Use cases / orchestration
 │   │   ├── infrastructure/           # Adapters: telephony, STT, TTS, LLM, DB
 │   │   └── interfaces/               # API/event handlers
-│   ├── knowledge-service/
+│   ├── knowledge_service/
 │   │   ├── domain/
 │   │   ├── application/
 │   │   ├── infrastructure/           # Vector DB adapter, document parsers
 │   │   └── interfaces/
-│   ├── tenant-config-service/
-│   ├── escalation-service/
-│   ├── recording-service/
-│   ├── analytics-service/
-│   └── shared-kernel/                 # Shared domain types, DTOs, event schemas
+│   ├── tenant_config_service/
+│   ├── escalation_service/
+│   ├── recording_service/
+│   ├── analytics_service/
+│   ├── auth_service/                  # Auth and JWT token issuance
+│   └── shared_kernel/                 # Shared domain types, DTOs, event schemas
 ├── libs/
 │   ├── llm-adapters/                  # OpenAI / Gemini / Claude adapters, common interface
 │   ├── stt-adapters/                  # Whisper / Deepgram adapters
 │   ├── tts-adapters/                  # OpenAI TTS / ElevenLabs adapters
 │   ├── telephony-adapters/            # Provider-specific call control adapters
+│   ├── embedding_adapters/            # OpenAI Embedding adapters
+│   ├── document_parsers/              # LangChain parsers (PDF, TXT, etc.)
 │   ├── event-bus-client/
 │   └── common-utils/
 ├── infra/
@@ -119,7 +124,8 @@ ai-receptionist-platform/
 | ORM | SQLAlchemy | With Alembic for migrations |
 | Primary datastore | PostgreSQL | Tenant config, transcripts, analytics, metadata |
 | Cache / ephemeral state | Redis | Per-call state, session data, rate limiting |
-| Vector database | Qdrant | Per-tenant namespace/collection isolation |
+| Vector database | Qdrant | Per-tenant payload filtering (logical isolation) |
+| Embeddings | OpenAI text-embedding-3-small | Exposed via swappable adapter interface |
 | LLM providers | OpenAI / Gemini / Claude via adapter interface | Swappable per tenant or globally |
 | STT | Whisper or Deepgram | Adapter interface |
 | TTS | OpenAI TTS or ElevenLabs | Adapter interface |
@@ -162,6 +168,7 @@ erDiagram
         uuid id PK
         uuid organization_id FK
         string email
+        string password_hash
         string role
         timestamp created_at
     }
@@ -245,7 +252,7 @@ erDiagram
     }
 ```
 
-> **Note:** Vector embeddings themselves are stored in Qdrant, not PostgreSQL; `KNOWLEDGE_CHUNK.vector_ref` is a pointer/ID into the vector store.
+> **Note:** Vector embeddings themselves are stored in Qdrant, not PostgreSQL; `KNOWLEDGE_CHUNK.vector_ref` is a pointer/ID into the vector store. The actual retrieval response returns the joined chunk content along with `confidence_score` (raw cosine similarity) and `is_confident` (boolean threshold comparison).
 
 ## 6. API Design (Representative — not exhaustive)
 
@@ -266,6 +273,8 @@ All APIs are versioned (`/api/v1/...`), tenant-scoped by auth context, and follo
 | `GET` | `/api/v1/organizations/{id}/analytics` | Aggregated analytics for a date range |
 | `POST` | `/internal/telephony/webhook` | Inbound call event from telephony provider (not tenant-scoped directly; resolved via phone number → org mapping) |
 | `POST` | `/internal/conversation/turn` | Internal engine-to-LLM-adapter turn processing (service-to-service) |
+| `POST` | `/api/v1/auth/login` | Authenticate user credentials and generate custom JWT token |
+| `POST` | `/api/v1/organizations/{id}/retrieval` | Query Qdrant vector store and return contextual chunks with `confidence_score` and `is_confident` flags |
 
 ## 7. Authentication
 
@@ -334,7 +343,7 @@ All data-access queries must include an org/tenant filter at the repository laye
 
 ## 16. Security Considerations
 
-- Tenant data isolation enforced at both the application layer (query filters) and, where possible, the storage layer (separate vector namespaces/collections per tenant).
+- Tenant data isolation is purely **logical** (application-layer `organization_id` payload filtering on every query across both PostgreSQL and Qdrant) rather than physical separate namespaces/collections, optimizing for a large volume of small tenants without excessive overhead.
 - Encryption at rest for PostgreSQL, object storage, and vector DB; encryption in transit (TLS) everywhere.
 - PII minimization: only collect caller data explicitly required by the receptionist role.
 - Secrets management via a dedicated secrets store (not `.env` files in production — Assumption: Vault or cloud-native secrets manager).
@@ -345,7 +354,7 @@ All data-access queries must include an org/tenant filter at the repository laye
 
 - Stateless service design allows horizontal scaling of the Conversation Engine and API services behind a load balancer.
 - Redis and PostgreSQL scaled independently (read replicas for Postgres as analytics load grows).
-- Vector DB (Qdrant) scaled via sharded/replicated collections per tenant size tier.
+- Vector DB (Qdrant) scaled via sharded/replicated collections, with tenant isolation enforced via payload filtering.
 - Telephony concurrency handled via the provider's native scaling (adapter should support call queuing/backpressure).
 - Event Bus decouples real-time call handling from downstream processing (recording, summary, analytics), allowing those to scale/queue independently under load.
 

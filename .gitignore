@@ -41,3 +41,9 @@ logs/
 
 # Antigravity / agent artifacts (keep plans out of history unless you want them tracked)
 .antigravity/
+
+
+
+sample.pdf
+start_servers.ps1
+e2e_flow.py

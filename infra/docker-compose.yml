@@ -40,6 +40,49 @@ services:
       - qdrant_data:/qdrant/storage
 
 
+  tenant-config-service:
+    build: 
+      context: ../
+      dockerfile: infra/docker/Dockerfile
+    container_name: receptionist_tenant_config
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://receptionist_user:receptionist_password@postgres:5432/receptionist_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["uvicorn", "services.tenant_config_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  knowledge-service:
+    build: 
+      context: ../
+      dockerfile: infra/docker/Dockerfile
+    container_name: receptionist_knowledge
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://receptionist_user:receptionist_password@postgres:5432/receptionist_db
+      - QDRANT_URL=http://qdrant:6333
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    command: ["uvicorn", "services.knowledge_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  auth-service:
+    build: 
+      context: ../
+      dockerfile: infra/docker/Dockerfile
+    container_name: receptionist_auth
+    ports:
+      - "8003:8000"
+    environment:
+      - JWT_SECRET_KEY=dev-secret-key
+    command: ["uvicorn", "services.auth_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
 volumes:
   postgres_data:
   redis_data:

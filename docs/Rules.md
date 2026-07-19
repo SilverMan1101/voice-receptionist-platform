@@ -16,6 +16,7 @@
 
 ## 2. Naming Conventions
 
+- Python directories/packages: `snake_case` (`knowledge_service`) due to import restrictions, as a deliberate exception to the general kebab-case convention.
 - Python: `snake_case` for functions/variables, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants.
 - API routes: plural nouns, kebab-case where multi-word (`/business-rules`, not `/businessRules`).
 - Database tables: `snake_case`, plural (`organizations`, `knowledge_documents`).

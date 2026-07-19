@@ -1,11 +1,6 @@
 from fastapi.testclient import TestClient
-import sys
-import os
 
-# Add the conversation-engine directory directly to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../services/conversation-engine')))
-
-from main import app
+from services.conversation_engine.main import app
 
 client = TestClient(app)
 
