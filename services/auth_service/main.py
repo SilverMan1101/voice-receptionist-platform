@@ -10,7 +10,7 @@ from shared_kernel.domain.models import User, Base
 from shared_kernel.domain.schemas import Token
 from libs.auth.jwt_validator import verify_password, create_access_token
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Auth Service")
 

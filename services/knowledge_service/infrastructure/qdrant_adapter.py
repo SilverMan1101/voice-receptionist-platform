@@ -1,20 +1,59 @@
+import time
 import os
 from uuid import UUID
 from typing import List, Dict, Any, Tuple
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
+from qdrant_client.http.exceptions import UnexpectedResponse
 
 class QdrantAdapter:
-    def __init__(self, host: str = "localhost", port: int = 6333, collection_name: str = "knowledge"):
-        # We can configure this via env vars later
+    # def __init__(self, host: str = "localhost", port: int = 6333, collection_name: str = "knowledge"):
+    #     # We can configure this via env vars later
+    #     qdrant_host = os.getenv("QDRANT_HOST", host)
+    #     self.client = QdrantClient(host=qdrant_host, port=port)
+    #     self.collection_name = collection_name
+    #     self._wait_until_ready()
+    #     self._ensure_collection()
+
+    def __init__(
+        self,
+        host: str = "qdrant",
+        port: int = 6333,
+        collection_name: str = "knowledge"
+    ):
         qdrant_host = os.getenv("QDRANT_HOST", host)
-        self.client = QdrantClient(host=qdrant_host, port=port)
+        qdrant_port = int(os.getenv("QDRANT_PORT", port))
+
+        print(f"Connecting to Qdrant {qdrant_host}:{qdrant_port}")
+
+        self.client = QdrantClient(
+            host=qdrant_host,
+            port=qdrant_port
+        )
+
         self.collection_name = collection_name
+        self._wait_until_ready()
         self._ensure_collection()
+
+    def _wait_until_ready(self):
+        for i in range(20):
+            try:
+                self.client.get_collections()
+                print("Qdrant ready")
+                return
+            except Exception as e:
+                print(f"Waiting for Qdrant {i+1}/20")
+                time.sleep(2)
+
+        raise RuntimeError("Qdrant unavailable")
 
     def _ensure_collection(self):
         try:
-            self.client.get_collection(self.collection_name)
+            collections = self.client.get_collections()
+            exists = any(c.name == self.collection_name for c in collections.collections)
+            if exists:
+                print(f"Collection {self.collection_name} already exists")
+                return
         except Exception:
             # 1536 for text-embedding-3-small
             self.client.create_collection(

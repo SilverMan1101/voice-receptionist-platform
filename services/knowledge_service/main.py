@@ -19,10 +19,30 @@ from knowledge_service.infrastructure.qdrant_adapter import QdrantAdapter
 
 app = FastAPI(title="Knowledge Service")
 
+
+parser = None
+embedder = None
+qdrant = None
 # Initialize adapters
-parser = LangChainDocumentParser()
-embedder = OpenAIEmbeddingAdapter()
-qdrant = QdrantAdapter()
+# parser = LangChainDocumentParser()
+# embedder = OpenAIEmbeddingAdapter()
+# qdrant = QdrantAdapter()
+
+@app.on_event("startup")
+def startup_event():
+    global parser, embedder, qdrant
+
+    print("START: parser")
+    parser = LangChainDocumentParser()
+
+    print("START: embedder")
+    embedder = OpenAIEmbeddingAdapter()
+
+    print("START: qdrant")
+    qdrant = QdrantAdapter()
+
+    print("DONE startup")
+
 
 class QueryRequest(BaseModel):
     query: str
