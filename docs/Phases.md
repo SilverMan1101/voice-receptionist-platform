@@ -12,7 +12,7 @@
 - Monorepo scaffolded per `Architecture.md` §3 folder structure.
 - Docker Compose environment (Postgres, Redis, Qdrant dev instance).
 - CI pipeline skeleton (lint, test, build stages).
-- `shared-kernel` with core domain types (Organization, Call, KnowledgeDocument stubs).
+- `shared_kernel` with core domain types (Organization, Call, KnowledgeDocument stubs).
 - Base FastAPI service template with health-check endpoint, structured logging, OpenTelemetry wiring.
 
 **Dependencies:** None.
@@ -31,7 +31,7 @@
 - [ ] Set up Docker Compose for Postgres/Redis/vector DB.
 - [ ] Set up base FastAPI service template + logging + tracing.
 - [ ] Set up CI (lint/test/build).
-- [ ] Define shared domain types in `shared-kernel`.
+- [ ] Define shared domain types in `shared_kernel`.
 
 ---
 
@@ -40,8 +40,8 @@
 **Objective:** Build multi-tenant configuration and the knowledge ingestion/RAG pipeline as text-only, testable via API — before adding voice complexity.
 
 **Deliverables:**
-- `tenant-config-service`: CRUD for Organization, Department, VoiceConfig, BusinessRule.
-- `knowledge-service`: document upload (PDF/DOCX/TXT/MD/CSV/XLSX/JSON), parsing, chunking, embedding, indexing into per-tenant vector namespace.
+- `tenant_config_service`: CRUD for Organization, Department, VoiceConfig, BusinessRule.
+- `knowledge_service`: document upload (PDF/DOCX/TXT/MD/CSV/XLSX/JSON), parsing, chunking, embedding, indexing into per-tenant vector namespace.
 - Retrieval API: given a text query + org_id, return ranked grounded chunks with confidence scores.
 - Auth Service: basic org admin authentication (JWT).
 
@@ -72,7 +72,7 @@
 **Objective:** Build the Conversation Engine's control logic — intent detection, retrieval invocation, business rules, escalation decisions, data collection — operating over **text** turns (no voice yet), to validate the "brain" before adding real-time audio complexity.
 
 **Deliverables:**
-- `conversation-engine` service with domain model for Call, CallTurn, Intent, EscalationDecision.
+- `conversation_engine` service with domain model for Call, CallTurn, Intent, EscalationDecision.
 - LLM Adapter Layer (OpenAI/Gemini/Claude) with tool-calling for: `retrieve_knowledge`, `collect_caller_info`, `trigger_escalation`, `end_call`.
 - Business Rules Engine evaluating tenant-configured escalation/routing rules.
 - A simple text-based simulation harness (chat-style) to test full conversations end-to-end without telephony.

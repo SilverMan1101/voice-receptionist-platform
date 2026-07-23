@@ -20,7 +20,7 @@
 | ORM | SQLAlchemy + Alembic |
 | Primary DB | PostgreSQL |
 | Cache/session store | Redis |
-| Vector DB | Qdrant |
+| Vector DB | Qdrant (Single collection with payload filtering for tenant isolation) |
 | LLM strategy | Provider-agnostic adapter layer over OpenAI / Gemini / Claude |
 | STT | Adapter over Whisper or Deepgram |
 | TTS | Adapter over OpenAI TTS or ElevenLabs |
@@ -29,7 +29,9 @@
 | Architecture style | Clean Architecture + DDD + SOLID, modular services in a monorepo |
 | Control authority | **Conversation Engine controls the app; the LLM only reasons/generates language, never directly triggers side effects** — this is a hard architectural rule, not a preference |
 | Knowledge grounding policy | No hallucinated organizational facts, ever. Below-confidence retrieval → graceful fallback + escalation, never a guess |
-| Multi-tenancy | Logical isolation per tenant across DB, vector store, and object storage; zero org-specific code branches allowed |
+| Knowledge Indexing | Knowledge documents go live immediately on indexing, no approval gate |
+| Multi-tenancy | Logical isolation per tenant via payload filtering (Qdrant) and DB filtering; zero org-specific code branches allowed |
+| Auth Approach | Custom JWT auth service (not a managed provider) |
 | Branch Strategy | Trunk-based, feature branches merge directly to main via PR (no develop branch) |
 | Code Review | Solo dev: PR + self-review. If team expands: 1 approval required |
 | Test Coverage | CI reports coverage; no hard fail threshold yet (revisit end of Phase 2, target ~75-80%) |
