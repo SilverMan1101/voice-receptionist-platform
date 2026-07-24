@@ -123,7 +123,8 @@ ai-receptionist-platform/
 | ORM | SQLAlchemy | With Alembic for migrations |
 | Primary datastore | PostgreSQL | Tenant config, transcripts, analytics, metadata |
 | Cache / ephemeral state | Redis | Per-call state, session data, rate limiting |
-| Vector database | Qdrant | Per-tenant namespace/collection isolation |
+| Vector database | Qdrant | Single collection with payload filtering for tenant isolation |
+| Embeddings | OpenAI text-embedding-3-small | Via swappable adapter |
 | LLM providers | OpenAI / Gemini / Claude via adapter interface | Swappable per tenant or globally |
 | STT | Whisper or Deepgram | Adapter interface |
 | TTS | OpenAI TTS or ElevenLabs | Adapter interface |
@@ -158,8 +159,8 @@ erDiagram
         string name
         string industry_type
         string timezone
-        jsonb operating_hours
-        jsonb contact_info
+        json operating_hours
+        json contact_info
         string status
         timestamp created_at
     }
@@ -167,6 +168,7 @@ erDiagram
         uuid id PK
         uuid organization_id FK
         string email
+        string hashed_password
         string role
         timestamp created_at
     }
@@ -196,8 +198,8 @@ erDiagram
         uuid id PK
         uuid organization_id FK
         string rule_type
-        jsonb condition
-        jsonb action
+        json condition
+        json action
         boolean active
     }
     VOICE_CONFIG {
@@ -261,7 +263,8 @@ All APIs are versioned (`/api/v1/...`), tenant-scoped by auth context, and follo
 | `POST` | `/api/v1/organizations` | Create a new tenant (platform operator only) |
 | `GET` | `/api/v1/organizations/{id}` | Fetch org profile/config |
 | `PUT` | `/api/v1/organizations/{id}` | Update org profile (hours, contacts, departments) |
-| `POST` | `/api/v1/organizations/{id}/knowledge` | Upload a knowledge document |
+| `POST` | `/api/v1/knowledge/upload` | Upload a knowledge document |
+| `POST` | `/api/v1/knowledge/query` | Query knowledge chunks (returns { score, is_confident, text, metadata }) |
 | `GET` | `/api/v1/organizations/{id}/knowledge` | List knowledge documents + indexing status |
 | `DELETE` | `/api/v1/organizations/{id}/knowledge/{docId}` | Remove a document (triggers re-index) |
 | `PUT` | `/api/v1/organizations/{id}/voice-config` | Configure greeting, voice, language, tone |
