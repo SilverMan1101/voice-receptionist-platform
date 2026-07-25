@@ -54,18 +54,21 @@ class QdrantAdapter:
             if exists:
                 print(f"Collection {self.collection_name} already exists")
                 return
-        except Exception:
-            # 1536 for text-embedding-3-small
-            self.client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config=qmodels.VectorParams(size=1536, distance=qmodels.Distance.COSINE),
-            )
-            # Create a payload index on organization_id for fast filtering
-            self.client.create_payload_index(
-                collection_name=self.collection_name,
-                field_name="organization_id",
-                field_schema=qmodels.PayloadSchemaType.KEYWORD,
-            )
+        except Exception as e:
+            print(f"Failed to check collections: {e}")
+            pass
+
+        # 1536 for text-embedding-3-small
+        self.client.create_collection(
+            collection_name=self.collection_name,
+            vectors_config=qmodels.VectorParams(size=1536, distance=qmodels.Distance.COSINE),
+        )
+        # Create a payload index on organization_id for fast filtering
+        self.client.create_payload_index(
+            collection_name=self.collection_name,
+            field_name="organization_id",
+            field_schema=qmodels.PayloadSchemaType.KEYWORD,
+        )
 
     def upsert_chunks(self, organization_id: UUID, document_id: UUID, chunks: List[Dict[str, Any]], vectors: List[List[float]]):
         """
