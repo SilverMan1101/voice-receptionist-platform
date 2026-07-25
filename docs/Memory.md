@@ -20,7 +20,8 @@
 | ORM | SQLAlchemy + Alembic |
 | Primary DB | PostgreSQL |
 | Cache/session store | Redis |
-| Vector DB | Qdrant |
+| Vector DB | Qdrant (Single collection with payload filtering for tenant isolation) |
+| Confidence Scoring | Qdrant raw cosine similarity score compared against a per-tenant threshold (default 0.5) to return { score, is_confident } |
 | LLM strategy | Provider-agnostic adapter layer over OpenAI / Gemini / Claude |
 | STT | Adapter over Whisper or Deepgram |
 | TTS | Adapter over OpenAI TTS or ElevenLabs |
@@ -29,7 +30,9 @@
 | Architecture style | Clean Architecture + DDD + SOLID, modular services in a monorepo |
 | Control authority | **Conversation Engine controls the app; the LLM only reasons/generates language, never directly triggers side effects** — this is a hard architectural rule, not a preference |
 | Knowledge grounding policy | No hallucinated organizational facts, ever. Below-confidence retrieval → graceful fallback + escalation, never a guess |
-| Multi-tenancy | Logical isolation per tenant across DB, vector store, and object storage; zero org-specific code branches allowed |
+| Knowledge Indexing | Knowledge documents go live immediately on indexing, no approval gate |
+| Multi-tenancy | Logical isolation per tenant via payload filtering (Qdrant) and DB filtering; zero org-specific code branches allowed |
+| Auth Approach | Custom JWT auth service (not a managed provider) |
 | Branch Strategy | Trunk-based, feature branches merge directly to main via PR (no develop branch) |
 | Code Review | Solo dev: PR + self-review. If team expands: 1 approval required |
 | Test Coverage | CI reports coverage; no hard fail threshold yet (revisit end of Phase 2, target ~75-80%) |
@@ -82,7 +85,6 @@
 ## 8. Known Issues / Risks to Track
 
 - No telephony provider chosen yet — blocks Phase 3 start.
-- No confirmed confidence-scoring mechanism for "escalate due to low confidence" — needs a decision before Phase 2 is complete.
 - Legal/consent requirements for call recording vary by jurisdiction and are not yet researched per target region.
 - Billing/pricing model for tenants is undefined.
 - Brand identity (colors, typeface, logo) undefined — `Design.md` uses placeholder tokens.
@@ -92,7 +94,6 @@
 - Telephony provider selection (`PRD.md` OQ-1, `Architecture.md` AQ-2).
 - Initial language set beyond English (`PRD.md` OQ-2).
 - Warm transfer requirement at MVP vs. later (`PRD.md` OQ-5).
-- Confidence-scoring mechanism for escalation (`PRD.md` OQ-6).
 - Kubernetes migration threshold (`Architecture.md` AQ-1).
 - Secrets management tooling (`Architecture.md` AQ-4).
 - Concurrent call load target for hardening phase (`Phases.md` PQ-1).

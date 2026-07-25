@@ -190,5 +190,5 @@ Manages the SaaS platform itself: onboarding new tenants, monitoring uptime, tel
 - OQ-3: What are the exact legal/consent requirements per target region (US, EU, India, etc.) for call recording?
 - OQ-4: What is the pricing/billing model for tenants (per-minute, per-seat, flat SaaS tiers)?
 - OQ-5: Is warm transfer technically required at launch, or is a "please hold, we'll call you back" pattern acceptable for MVP?
-- OQ-6: What confidence-scoring mechanism will be used to decide "escalate due to low confidence" (numeric threshold from retrieval score, LLM self-reported confidence, or a dedicated classifier)?
-- OQ-7: Should there be a human-in-the-loop approval step for newly uploaded knowledge before it goes live?
+- OQ-6: [Resolved - see Memory.md Key Decisions]
+- OQ-7: [Resolved - see Memory.md Key Decisions]

@@ -38,7 +38,59 @@ services:
       - "6334:6334" # gRPC API
     volumes:
       - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/127.0.0.1/6333'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
+
+  tenant_config_service:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: receptionist_tenant_config
+    command: ["uvicorn", "services.tenant_config_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://receptionist_user:receptionist_password@postgres:5432/receptionist_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  knowledge_service:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: receptionist_knowledge
+    command: ["uvicorn", "services.knowledge_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://receptionist_user:receptionist_password@postgres:5432/receptionist_db
+      - QDRANT_URL=http://qdrant:6333
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+  auth_service:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: receptionist_auth
+    command: ["uvicorn", "services.auth_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8003:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://receptionist_user:receptionist_password@postgres:5432/receptionist_db
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:

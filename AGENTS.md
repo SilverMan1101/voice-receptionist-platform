@@ -25,6 +25,60 @@ This project has a full documentation set in `/docs`. **Read these before any ta
 - Work one phase, one milestone at a time. Confirm a milestone is done (per its Acceptance Criteria in `docs/Phases.md`) before moving to the next.
 - After completing meaningful work, propose an update to `docs/Memory.md` (new decisions made, questions resolved) rather than leaving that context only in chat history.
 
+## Naming & folder discipline
+
+- Python packages/directories under `services/`, `libs/`, and `tests/` use
+  `snake_case` (e.g. `knowledge_service`, `tenant_config_service`,
+  `document_parsers`) — this is a deliberate, documented exception to the
+  general kebab-case convention, required because Python cannot import a
+  package name containing a hyphen. This is recorded in `docs/Rules.md` §2 —
+  do not deviate from it in either direction.
+- Before creating ANY new folder under `services/` or `libs/`, first check
+  whether a folder for that same service/module already exists under a
+  different name or casing (e.g. `knowledge-service` vs `knowledge_service`,
+  `conversation-engine` vs `conversation_engine`). Search the existing tree
+  — do not assume based on `docs/Architecture.md` §3 alone, since that
+  document can lag behind what's actually in the repo.
+- If you find that a naming inconsistency already exists (two folders for
+  what should be one service/module), do not build alongside it or work
+  around it — stop, consolidate into the single correct `snake_case` name,
+  delete the incorrect duplicate entirely, and confirm no code still
+  references the deleted path (imports, docker-compose, CI config) before
+  continuing with the original task.
+- Every folder name actually present in the repo under `services/` and
+  `libs/` must have a matching entry in `docs/Architecture.md` §3 using the
+  identical name and casing — if you create a folder that isn't yet listed
+  there, add it to §3 in the same change, don't leave the doc to drift.
+- The same rule applies to service names used elsewhere for consistency:
+  docker-compose service keys, container names, import paths, and
+  `docs/Architecture.md` should all refer to the same service using
+  matching names — a service should never be `knowledge-service` in
+  docker-compose but `knowledge_service` as a Python import path without
+  that being an intentional, documented exception (as above), not an
+  accidental drift.
+
+## Environment discipline
+
+- This project uses one virtual environment at `venv/` in the project root.
+  Never install any Python package globally / system-wide, for any reason.
+- Before running ANY `pip`, `python`, `pytest`, or `uvicorn` command in a
+  terminal, first confirm the venv is active — the prompt should show
+  `(venv)`. If it doesn't, activate it first:
+  `.\venv\Scripts\Activate.ps1` (PowerShell) — do not proceed until it's active.
+- If a new terminal, worktree, or task session is started, treat the venv as
+  NOT active by default. Re-activate it explicitly at the start of that
+  session before running any Python command — never assume a previous
+  session's state carries over.
+- Prefer being fully explicit over relying on an activated shell state:
+  `.\venv\Scripts\python.exe -m pip install -r requirements.txt` and
+  `.\venv\Scripts\python.exe -m pytest` work correctly regardless of whether
+  activation happened, and are the safer default when in doubt.
+- If you ever detect that a package was installed outside `venv/` (e.g. `pip
+  list` run outside the venv shows project dependencies), stop and flag it
+  to the user rather than continuing — don't silently keep working around it.
+- Every new dependency must be added to `requirements.txt` in the same
+  change that introduces it — never left as an ad hoc local install.
+
 ## Git workflow
 
 - Never commit or push directly to `main`. `main` is protected per `docs/Rules.md` §8.

@@ -72,31 +72,35 @@ flowchart TD
 ```
 ai-receptionist-platform/
 ├── apps/
-│   ├── admin-portal/                # Frontend web app (React/Next.js — see Design.md)
-│   └── voice-runtime/                # Real-time call handling process(es)
+│   ├── admin_portal/                # Frontend web app (React/Next.js — see Design.md)
+│   └── voice_runtime/                # Real-time call handling process(es)
 ├── services/
-│   ├── conversation-engine/
+│   ├── auth_service/                 # Custom JWT auth
+│   ├── conversation_engine/
 │   │   ├── domain/                   # Entities, value objects, business rules (DDD)
 │   │   ├── application/              # Use cases / orchestration
 │   │   ├── infrastructure/           # Adapters: telephony, STT, TTS, LLM, DB
 │   │   └── interfaces/               # API/event handlers
-│   ├── knowledge-service/
+│   ├── knowledge_service/
 │   │   ├── domain/
 │   │   ├── application/
 │   │   ├── infrastructure/           # Vector DB adapter, document parsers
 │   │   └── interfaces/
-│   ├── tenant-config-service/
-│   ├── escalation-service/
-│   ├── recording-service/
-│   ├── analytics-service/
-│   └── shared-kernel/                 # Shared domain types, DTOs, event schemas
+│   ├── tenant_config_service/
+│   ├── escalation_service/
+│   ├── recording_service/
+│   ├── analytics_service/
+│   └── shared_kernel/                 # Shared domain types, DTOs, event schemas
 ├── libs/
-│   ├── llm-adapters/                  # OpenAI / Gemini / Claude adapters, common interface
-│   ├── stt-adapters/                  # Whisper / Deepgram adapters
-│   ├── tts-adapters/                  # OpenAI TTS / ElevenLabs adapters
-│   ├── telephony-adapters/            # Provider-specific call control adapters
-│   ├── event-bus-client/
-│   └── common-utils/
+│   ├── auth/                          # JWT validation dependencies
+│   ├── embedding_adapters/            # OpenAI text-embedding-3-small, etc.
+│   ├── document_parsers/              # LangChain document loaders
+│   ├── llm_adapters/                  # OpenAI / Gemini / Claude adapters, common interface
+│   ├── stt_adapters/                  # Whisper / Deepgram adapters
+│   ├── tts_adapters/                  # OpenAI TTS / ElevenLabs adapters
+│   ├── telephony_adapters/            # Provider-specific call control adapters
+│   ├── event_bus_client/
+│   └── common_utils/
 ├── infra/
 │   ├── docker/
 │   ├── docker-compose.yml
@@ -119,7 +123,8 @@ ai-receptionist-platform/
 | ORM | SQLAlchemy | With Alembic for migrations |
 | Primary datastore | PostgreSQL | Tenant config, transcripts, analytics, metadata |
 | Cache / ephemeral state | Redis | Per-call state, session data, rate limiting |
-| Vector database | Qdrant | Per-tenant namespace/collection isolation |
+| Vector database | Qdrant | Single collection with payload filtering for tenant isolation |
+| Embeddings | OpenAI text-embedding-3-small | Via swappable adapter |
 | LLM providers | OpenAI / Gemini / Claude via adapter interface | Swappable per tenant or globally |
 | STT | Whisper or Deepgram | Adapter interface |
 | TTS | OpenAI TTS or ElevenLabs | Adapter interface |
@@ -130,6 +135,7 @@ ai-receptionist-platform/
 | Frontend (Admin Portal) | React (Next.js recommended — Assumption) | See `Design.md` |
 | Messaging/Event Bus | Redis Streams (MVP) → Kafka/RabbitMQ (scale) | Assumption: start simple, graduate under load |
 | Observability | OpenTelemetry + Prometheus/Grafana + structured JSON logs | Assumption |
+| Authentication | Custom JWT Auth Service | Issuing and validating tenant-scoped tokens |
 
 ## 5. Database Schema (Core Entities)
 
@@ -153,8 +159,8 @@ erDiagram
         string name
         string industry_type
         string timezone
-        jsonb operating_hours
-        jsonb contact_info
+        json operating_hours
+        json contact_info
         string status
         timestamp created_at
     }
@@ -162,6 +168,7 @@ erDiagram
         uuid id PK
         uuid organization_id FK
         string email
+        string hashed_password
         string role
         timestamp created_at
     }
@@ -191,8 +198,8 @@ erDiagram
         uuid id PK
         uuid organization_id FK
         string rule_type
-        jsonb condition
-        jsonb action
+        json condition
+        json action
         boolean active
     }
     VOICE_CONFIG {
@@ -256,7 +263,8 @@ All APIs are versioned (`/api/v1/...`), tenant-scoped by auth context, and follo
 | `POST` | `/api/v1/organizations` | Create a new tenant (platform operator only) |
 | `GET` | `/api/v1/organizations/{id}` | Fetch org profile/config |
 | `PUT` | `/api/v1/organizations/{id}` | Update org profile (hours, contacts, departments) |
-| `POST` | `/api/v1/organizations/{id}/knowledge` | Upload a knowledge document |
+| `POST` | `/api/v1/knowledge/upload` | Upload a knowledge document |
+| `POST` | `/api/v1/knowledge/query` | Query knowledge chunks (returns { score, is_confident, text, metadata }) |
 | `GET` | `/api/v1/organizations/{id}/knowledge` | List knowledge documents + indexing status |
 | `DELETE` | `/api/v1/organizations/{id}/knowledge/{docId}` | Remove a document (triggers re-index) |
 | `PUT` | `/api/v1/organizations/{id}/voice-config` | Configure greeting, voice, language, tone |
@@ -264,12 +272,13 @@ All APIs are versioned (`/api/v1/...`), tenant-scoped by auth context, and follo
 | `GET` | `/api/v1/organizations/{id}/calls` | List call history (filterable) |
 | `GET` | `/api/v1/organizations/{id}/calls/{callId}` | Call detail: transcript, summary, recording link |
 | `GET` | `/api/v1/organizations/{id}/analytics` | Aggregated analytics for a date range |
+| `POST` | `/api/v1/auth/login` | Login and issue Custom JWT |
 | `POST` | `/internal/telephony/webhook` | Inbound call event from telephony provider (not tenant-scoped directly; resolved via phone number → org mapping) |
 | `POST` | `/internal/conversation/turn` | Internal engine-to-LLM-adapter turn processing (service-to-service) |
 
 ## 7. Authentication
 
-- Admin Portal / API: **OAuth2 / JWT bearer tokens**, issued by the Auth Service.
+- Admin Portal / API: **OAuth2 / JWT bearer tokens**, issued by the custom Auth Service.
 - Platform Operators: separate elevated role with cross-tenant access, enforced at the API Gateway.
 - Telephony webhooks: verified via provider-specific signature validation (e.g., request signing) rather than JWT.
 - Service-to-service internal calls: mTLS or signed internal tokens within the private network (Assumption).
@@ -334,7 +343,7 @@ All data-access queries must include an org/tenant filter at the repository laye
 
 ## 16. Security Considerations
 
-- Tenant data isolation enforced at both the application layer (query filters) and, where possible, the storage layer (separate vector namespaces/collections per tenant).
+- Tenant data isolation enforced at both the application layer (query filters) and the storage layer. Specifically, Vector DB isolation is logical/application-layer via `organization_id` payload filtering in a single Qdrant collection, **not** via separate collections per tenant.
 - Encryption at rest for PostgreSQL, object storage, and vector DB; encryption in transit (TLS) everywhere.
 - PII minimization: only collect caller data explicitly required by the receptionist role.
 - Secrets management via a dedicated secrets store (not `.env` files in production — Assumption: Vault or cloud-native secrets manager).

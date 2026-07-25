@@ -63,11 +63,11 @@ Follow **Conventional Commits**:
 ```
 
 Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `security`.
-Scope: the affected service/module (e.g., `conversation-engine`, `knowledge-service`, `admin-portal`).
+Scope: the affected service/module (e.g., `conversation_engine`, `knowledge_service`, `admin_portal`).
 
 Examples:
-- `feat(knowledge-service): add DOCX parser to ingestion pipeline`
-- `fix(conversation-engine): prevent double-escalation on timeout`
+- `feat(knowledge_service): add DOCX parser to ingestion pipeline`
+- `fix(conversation_engine): prevent double-escalation on timeout`
 
 ## 8. Branch Strategy
 
