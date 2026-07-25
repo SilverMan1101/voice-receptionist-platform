@@ -14,11 +14,11 @@ jobs:
 
     services:
       qdrant:
-        image: qdrant/qdrant:v1.8.0  # pin a stable version
+        image: qdrant/qdrant:latest  # pin a stable version
         ports:
           - 6333:6333
         options: >-
-          --health-cmd='curl -fsS http://localhost:6333/health || exit 1'
+          --health-cmd=["CMD", "curl", "-fsS", "http://localhost:6333/health", "||", "exit", "1"]
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
