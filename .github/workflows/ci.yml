@@ -11,8 +11,7 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
-    container:
-      image: python:3.11
+
     services:
       qdrant:
         image: qdrant/qdrant:latest  # pin a stable version
