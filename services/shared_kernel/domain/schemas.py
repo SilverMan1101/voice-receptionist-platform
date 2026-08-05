@@ -118,3 +118,84 @@ class TokenData(BaseModel):
     user_id: Optional[UUID] = None
     organization_id: Optional[UUID] = None
     role: Optional[str] = None
+
+# Calls
+class CallBase(BaseModel):
+    caller_number: Optional[str] = None
+    status: str = "in_progress"
+    recording_url: Optional[str] = None
+
+class CallCreate(CallBase):
+    pass
+
+class CallResponse(CallBase):
+    id: UUID
+    organization_id: UUID
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True
+
+# CallTurns
+class CallTurnBase(BaseModel):
+    turn_index: int
+    speaker: str
+    text: str
+
+class CallTurnCreate(CallTurnBase):
+    pass
+
+class CallTurnResponse(CallTurnBase):
+    id: UUID
+    call_id: UUID
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+# Escalation
+class EscalationBase(BaseModel):
+    department_id: Optional[UUID] = None
+    reason: str
+    outcome: Optional[str] = None
+
+class EscalationCreate(EscalationBase):
+    pass
+
+class EscalationResponse(EscalationBase):
+    id: UUID
+    call_id: UUID
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+# CollectedInfo
+class CollectedInfoBase(BaseModel):
+    field_name: str
+    field_value: str
+
+class CollectedInfoCreate(CollectedInfoBase):
+    pass
+
+class CollectedInfoResponse(CollectedInfoBase):
+    id: UUID
+    call_id: UUID
+
+    class Config:
+        orm_mode = True
+
+# -----------------
+# Ephemeral Domain Models (Not persisted directly via ORM, used by Engine)
+# -----------------
+class Intent(BaseModel):
+    name: str
+    confidence: float
+    parameters: Optional[Dict[str, Any]] = None
+
+class EscalationDecision(BaseModel):
+    reason: str
+    department_id: Optional[UUID] = None
+    fallback_message: Optional[str] = None
+

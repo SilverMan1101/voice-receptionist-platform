@@ -22,7 +22,7 @@
 | Cache/session store | Redis |
 | Vector DB | Qdrant (Single collection with payload filtering for tenant isolation) |
 | Confidence Scoring | Qdrant raw cosine similarity score compared against a per-tenant threshold (default 0.5) to return { score, is_confident } |
-| LLM strategy | Provider-agnostic adapter layer over OpenAI / Gemini / Claude |
+| LLM strategy | Provider-agnostic adapter layer implemented using the OpenAI Python SDK, enabling easy swaps to other compatible providers. Defaulting to `gpt-4o-mini`. |
 | STT | Adapter over Whisper or Deepgram |
 | TTS | Adapter over OpenAI TTS or ElevenLabs |
 | Containerization | Docker + Docker Compose |

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, Text, JSON
+from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, Text, JSON, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -82,3 +82,54 @@ class VoiceConfig(Base):
     tone = Column(String, default="professional")
 
     organization = relationship("Organization", back_populates="voice_config")
+
+class Call(Base):
+    __tablename__ = "calls"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    caller_number = Column(String, nullable=True)
+    started_at = Column(DateTime, default=datetime.utcnow)
+    ended_at = Column(DateTime, nullable=True)
+    status = Column(String, default="in_progress")
+    recording_url = Column(String, nullable=True)
+
+    turns = relationship("CallTurn", back_populates="call", cascade="all, delete-orphan")
+    escalation = relationship("Escalation", uselist=False, back_populates="call", cascade="all, delete-orphan")
+    collected_info = relationship("CollectedInfo", back_populates="call", cascade="all, delete-orphan")
+
+class CallTurn(Base):
+    __tablename__ = "call_turns"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    call_id = Column(UUID(as_uuid=True), ForeignKey("calls.id"), nullable=False)
+    turn_index = Column(Integer, nullable=False)
+    speaker = Column(String, nullable=False) # "caller" or "ai"
+    text = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    call = relationship("Call", back_populates="turns")
+
+class Escalation(Base):
+    __tablename__ = "escalations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    call_id = Column(UUID(as_uuid=True), ForeignKey("calls.id"), nullable=False, unique=True)
+    department_id = Column(UUID(as_uuid=True), ForeignKey("departments.id"), nullable=True)
+    reason = Column(String, nullable=False)
+    outcome = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    call = relationship("Call", back_populates="escalation")
+    department = relationship("Department")
+
+class CollectedInfo(Base):
+    __tablename__ = "collected_info"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    call_id = Column(UUID(as_uuid=True), ForeignKey("calls.id"), nullable=False)
+    field_name = Column(String, nullable=False)
+    field_value = Column(String, nullable=False)
+
+    call = relationship("Call", back_populates="collected_info")
+

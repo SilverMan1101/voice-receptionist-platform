@@ -6,7 +6,9 @@ from typing import List, Optional
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 
+load_dotenv()
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../libs')))
 
@@ -14,9 +16,9 @@ from shared_kernel.core.database import get_db
 from shared_kernel.domain import models, schemas
 from auth.jwt_validator import get_current_token_data
 from document_parsers.base import LangChainDocumentParser
-from embedding_adapters.base import OpenAIEmbeddingAdapter
+# from embedding_adapters.base import OpenAIEmbeddingAdapter
+from embedding_adapters.base import GeminiEmbeddingAdapter
 from knowledge_service.infrastructure.qdrant_adapter import QdrantAdapter
-
 app = FastAPI(title="Knowledge Service")
 
 
@@ -36,7 +38,7 @@ def startup_event():
     parser = LangChainDocumentParser()
 
     print("START: embedder")
-    embedder = OpenAIEmbeddingAdapter()
+    embedder = GeminiEmbeddingAdapter()
 
     print("START: qdrant")
     qdrant = QdrantAdapter()

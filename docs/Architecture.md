@@ -48,8 +48,8 @@ flowchart TD
 |---|---|
 | **Telephony Gateway Adapter** | Abstracts the telephony provider (SIP/PSTN bridging, call control, media streaming). |
 | **Speech-to-Text (STT) Service** | Streaming transcription of caller audio. Provider-agnostic adapter (Whisper, Deepgram). |
-| **Conversation Engine** | Core orchestrator. Owns call state, turn management, intent detection, tool routing, escalation decisions, interruption handling. The LLM is a subordinate reasoning tool it calls — never the controller. |
-| **LLM Adapter Layer** | Uniform interface over OpenAI/Gemini/Claude for reasoning and response generation; supports function/tool calling and structured outputs. |
+| **Conversation Engine** | Core orchestrator. Owns call state, turn management, intent detection, tool routing, escalation decisions, interruption handling. The LLM is a subordinate reasoning tool it calls — never the controller. Exposes a strict tool-calling contract: `retrieve_knowledge`, `collect_caller_info`, `trigger_escalation`, `end_call`. |
+| **LLM Adapter Layer** | Uniform interface (implemented via OpenAI SDK) for reasoning and response generation; supports strict function/tool calling and structured outputs. |
 | **Knowledge Retrieval Service (RAG)** | Embeds queries, performs vector search scoped to the tenant, returns ranked context chunks with source citations and confidence scores. |
 | **Ingestion & Embedding Pipeline** | Parses uploaded documents (PDF/DOCX/TXT/MD/CSV/XLSX/JSON/URLs), chunks, embeds, writes to the tenant's vector namespace; re-indexes on update/delete. |
 | **Business Rules Engine** | Tenant-configured rules: escalation triggers, operating hours, department routing, data-collection requirements. Declarative, not hardcoded per tenant. |

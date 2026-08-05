@@ -17,7 +17,7 @@ class QdrantAdapter:
 
     def __init__(
         self,
-        host: str = "qdrant",
+        host: str = "localhost",
         port: int = 6333,
         collection_name: str = "knowledge"
     ):
@@ -26,10 +26,7 @@ class QdrantAdapter:
 
         print(f"Connecting to Qdrant {qdrant_host}:{qdrant_port}")
 
-        self.client = QdrantClient(
-            host=qdrant_host,
-            port=qdrant_port
-        )
+        self.client = QdrantClient(port=qdrant_port, host=qdrant_host)
 
         self.collection_name = collection_name
         self._wait_until_ready()
@@ -61,7 +58,7 @@ class QdrantAdapter:
         # 1536 for text-embedding-3-small
         self.client.create_collection(
             collection_name=self.collection_name,
-            vectors_config=qmodels.VectorParams(size=1536, distance=qmodels.Distance.COSINE),
+            vectors_config=qmodels.VectorParams(size=3072, distance=qmodels.Distance.COSINE),
         )
         # Create a payload index on organization_id for fast filtering
         self.client.create_payload_index(
