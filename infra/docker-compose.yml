@@ -71,8 +71,8 @@ services:
       - "8002:8000"
     environment:
       - DATABASE_URL=postgresql+psycopg2://receptionist_user:receptionist_password@postgres:5432/receptionist_db
-      # - QDRANT_URL=http://qdrant:6333
-      - QDRANT_URL=http://localhost:6333/
+      - QDRANT_URL=http://qdrant:6333
+      # - QDRANT_URL=http://localhost:6333/
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       postgres:

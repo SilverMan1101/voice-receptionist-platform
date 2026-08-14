@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 
 class KnowledgeClient:
     def __init__(self, base_url: str = None):
-        self.base_url = base_url or os.environ.get("KNOWLEDGE_SERVICE_URL", "http://127.0.0.1:8000")
+        self.base_url = base_url or os.environ.get("KNOWLEDGE_SERVICE_URL", "http://localhost:8002/")
 
     def query(self, token: str, query_text: str, limit: int = 5, threshold: float = 0.5) -> List[Dict[str, Any]]:
         """

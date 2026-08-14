@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from libs.llm_adapters.openai_adapter import OpenAIAdapter
+from libs.llm_adapters.gemini_adapter import GeminiAdapter
 from services.conversation_engine.infrastructure.redis_store import CallStateStore
 from services.conversation_engine.infrastructure.knowledge_client import KnowledgeClient
 from services.conversation_engine.application.orchestrator import ConversationOrchestrator
@@ -15,11 +16,16 @@ def main():
     print("Initializing Conversation Engine Simulation...")
     
     # Check API Key
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("ERROR: OPENAI_API_KEY environment variable is not set.")
-        sys.exit(1)
-        
-    llm = OpenAIAdapter(model_name="gpt-4o-mini")
+    # if not os.environ.get("OPENAI_API_KEY"):
+    #     print("ERROR: OPENAI_API_KEY environment variable is not set.")
+    #     sys.exit(1)
+
+    if not os.environ.get("GEMINI_API_KEY"):
+       print("ERROR: GEMINI_API_KEY environment variable is not set.")
+       sys.exit(1)
+    
+    # llm = OpenAIAdapter(model_name="gpt-4o-mini")
+    llm = GeminiAdapter(model_name="gemini-3.5-flash-lite")
     state = CallStateStore(redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
     knowledge_client = KnowledgeClient(base_url=os.environ.get("KNOWLEDGE_SERVICE_URL", "http://127.0.0.1:8000"))
     
@@ -48,7 +54,7 @@ def main():
     orchestrator = ConversationOrchestrator(llm, state, knowledge_client, rules)
     
     call_id = str(uuid.uuid4())
-    token = "mock_token_for_simulation"
+    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZDU0YmRhMy01N2Q4LTQ5MDItOTgyMC1kZmRkMjQ1Zjg3M2QiLCJvcmdfaWQiOiI3MTYzMDEwOS1kNWVkLTRkOTUtOWYwMi1jZDNlMWEzYjZlZTYiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3ODY4MTM3NzN9.i6SN47r_G-bnOOY_Kv35t4gDzRLJ72q8OsscL8tJE3E"
     
     print("\n--- Simulation Started ---")
     print("Type 'quit' or 'exit' to end the simulation.\n")
@@ -58,7 +64,9 @@ def main():
             user_input = input("Caller: ")
             if user_input.lower() in ['quit', 'exit']:
                 break
-                
+            if not user_input.strip():
+                print("AI: I didn't catch that — could you say that again?")
+                continue
             response = orchestrator.process_turn(call_id, str(org_id), token, user_input)
             
             if response["action"] == "reply":
