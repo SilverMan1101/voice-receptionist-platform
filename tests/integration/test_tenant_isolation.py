@@ -138,7 +138,7 @@ def test_tenant_isolation(qdrant):
 
     # Use identical embeddings so this test cannot accidentally pass
     # because the vectors are naturally far apart.
-    vector = [0.1] * 1536
+    vector = [0.1] * 3072
 
     qdrant.upsert_chunks(
         organization_id=org_a,
