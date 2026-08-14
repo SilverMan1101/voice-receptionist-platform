@@ -75,6 +75,7 @@ jobs:
           DATABASE_URL: postgresql://receptionist_user:receptionist_password@localhost:5432/receptionist_db
           REDIS_URL: redis://localhost:6379/0
           OPENAI_API_KEY: dummy_key
+          GEMINI_API_KEY: dummy_key
           PYTHONPATH: ${{ github.workspace }}
         run: |
           # Run tests and report coverage but do not fail on coverage threshold
