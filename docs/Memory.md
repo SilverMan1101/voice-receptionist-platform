@@ -24,8 +24,9 @@
 | Confidence Scoring | Qdrant raw cosine similarity score compared against a per-tenant threshold (default 0.5) to return { score, is_confident } |
 | Embedding Models | Both Gemini (`models/gemini-embedding-2`) and OpenAI are present in code, but Gemini is active and OpenAI is currently commented out. |
 | LLM strategy | Provider-agnostic adapter layer implemented for both OpenAI and Gemini. Gemini (`gemini-3.5-flash-lite`) is currently active/default, while OpenAI instantiation is commented out. |
-| STT | Adapter over Whisper or Deepgram |
-| TTS | Adapter over OpenAI TTS or ElevenLabs |
+| STT | Adapter over Gemini (with Whisper/Deepgram as documented alternatives) |
+| TTS | Adapter over Gemini (with OpenAI TTS/ElevenLabs as alternatives) |
+| Telephony | Twilio (Trial) via webhook |
 | Containerization | Docker + Docker Compose |
 | Reverse proxy | Nginx |
 | Architecture style | Clean Architecture + DDD + SOLID, modular services in a monorepo |
@@ -85,14 +86,14 @@
 
 ## 8. Known Issues / Risks to Track
 
-- No telephony provider chosen yet — blocks Phase 3 start.
+- STT uses buffered (non-streaming) transcription via Gemini's standard API, not true real-time streaming — actual latency will be measured and compared against PRD NFR targets once this is testable; a real streaming STT provider (e.g. Deepgram) remains a documented swap-in option via the existing adapter pattern if this proves too slow.
+- The Twilio webhook (`/internal/telephony/webhook`) has basic authenticity signature validation, but robust rate limiting is deferred to Phase 7 hardening.
 - Legal/consent requirements for call recording vary by jurisdiction and are not yet researched per target region.
 - Billing/pricing model for tenants is undefined.
 - Brand identity (colors, typeface, logo) undefined — `Design.md` uses placeholder tokens.
 
 ## 9. Pending Decisions (See each document's "Open Questions" section for full detail)
 
-- Telephony provider selection (`PRD.md` OQ-1, `Architecture.md` AQ-2).
 - Initial language set beyond English (`PRD.md` OQ-2).
 - Warm transfer requirement at MVP vs. later (`PRD.md` OQ-5).
 - Kubernetes migration threshold (`Architecture.md` AQ-1).

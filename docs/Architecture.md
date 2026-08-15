@@ -126,9 +126,9 @@ ai-receptionist-platform/
 | Vector database | Qdrant | Single collection with payload filtering for tenant isolation |
 | Embeddings | Gemini `models/gemini-embedding-2` | Via swappable adapter (OpenAI adapter exists in code but is commented out) |
 | LLM providers | Gemini / OpenAI via adapter interface | Gemini (`gemini-3.5-flash-lite`) is currently active/default. OpenAI adapter exists but is commented out where used. |
-| STT | Whisper or Deepgram | Adapter interface |
-| TTS | OpenAI TTS or ElevenLabs | Adapter interface |
-| Telephony | Provider TBD (Assumption: Twilio-class) | Adapter interface |
+| STT | Gemini | Adapter interface. Buffered approach used. Deepgram/Whisper are alternatives. |
+| TTS | Gemini | Adapter interface. OpenAI/ElevenLabs are alternatives. |
+| Telephony | Twilio | Adapter interface |
 | Object storage | S3-compatible | Call recordings, uploaded documents |
 | Containerization | Docker, Docker Compose | Local dev + baseline deployment |
 | Reverse proxy | Nginx | TLS termination, routing |
