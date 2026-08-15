@@ -22,7 +22,8 @@
 | Cache/session store | Redis |
 | Vector DB | Qdrant (Single collection with payload filtering for tenant isolation) |
 | Confidence Scoring | Qdrant raw cosine similarity score compared against a per-tenant threshold (default 0.5) to return { score, is_confident } |
-| LLM strategy | Provider-agnostic adapter layer implemented using the OpenAI Python SDK, enabling easy swaps to other compatible providers. Defaulting to `gpt-4o-mini`. |
+| Embedding Models | Both Gemini (`models/gemini-embedding-2`) and OpenAI are present in code, but Gemini is active and OpenAI is currently commented out. |
+| LLM strategy | Provider-agnostic adapter layer implemented for both OpenAI and Gemini. Gemini (`gemini-3.5-flash-lite`) is currently active/default, while OpenAI instantiation is commented out. |
 | STT | Adapter over Whisper or Deepgram |
 | TTS | Adapter over OpenAI TTS or ElevenLabs |
 | Containerization | Docker + Docker Compose |

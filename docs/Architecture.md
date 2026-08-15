@@ -124,8 +124,8 @@ ai-receptionist-platform/
 | Primary datastore | PostgreSQL | Tenant config, transcripts, analytics, metadata |
 | Cache / ephemeral state | Redis | Per-call state, session data, rate limiting |
 | Vector database | Qdrant | Single collection with payload filtering for tenant isolation |
-| Embeddings | OpenAI text-embedding-3-small | Via swappable adapter |
-| LLM providers | OpenAI / Gemini / Claude via adapter interface | Swappable per tenant or globally |
+| Embeddings | Gemini `models/gemini-embedding-2` | Via swappable adapter (OpenAI adapter exists in code but is commented out) |
+| LLM providers | Gemini / OpenAI via adapter interface | Gemini (`gemini-3.5-flash-lite`) is currently active/default. OpenAI adapter exists but is commented out where used. |
 | STT | Whisper or Deepgram | Adapter interface |
 | TTS | OpenAI TTS or ElevenLabs | Adapter interface |
 | Telephony | Provider TBD (Assumption: Twilio-class) | Adapter interface |
