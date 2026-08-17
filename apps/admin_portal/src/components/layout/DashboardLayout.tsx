@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '../ui/Button';
-import { LayoutDashboard, PhoneCall, BookOpen, Settings, LogOut, Menu, X, Headphones, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, PhoneCall, BookOpen, Settings, LogOut, Menu, X, Headphones, MessageSquare, Phone } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +35,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { name: 'Call History', href: '/dashboard/calls', icon: PhoneCall },
     { name: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
     { name: 'Test Assistant', href: '/dashboard/simulator', icon: MessageSquare },
+    { name: 'Live Phone Test', href: '/dashboard/test-call', icon: Phone },
     { name: 'Configuration', href: '/dashboard/config', icon: Settings },
   ];
 
