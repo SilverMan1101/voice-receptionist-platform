@@ -81,6 +81,13 @@ class OrganizationCreate(OrganizationBase):
     admin_email: EmailStr
     admin_password: str
 
+class OrganizationUpdate(BaseModel):
+    name: Optional[str] = None
+    industry_type: Optional[str] = None
+    timezone: Optional[str] = None
+    operating_hours: Optional[Dict[str, Any]] = None
+    contact_info: Optional[Dict[str, Any]] = None
+
 class OrganizationResponse(OrganizationBase):
     id: UUID
     created_at: datetime

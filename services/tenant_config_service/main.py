@@ -58,6 +58,26 @@ def get_my_organization(
         raise HTTPException(status_code=404, detail="Organization not found")
     return org
 
+@app.put("/api/v1/organizations/me", response_model=schemas.OrganizationResponse)
+def update_my_organization(
+    org_update: schemas.OrganizationUpdate,
+    token_data: schemas.TokenData = Depends(get_current_token_data),
+    db: Session = Depends(get_db)
+):
+    org = db.query(models.Organization).filter(models.Organization.id == token_data.organization_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    if org_update.name is not None: org.name = org_update.name
+    if org_update.industry_type is not None: org.industry_type = org_update.industry_type
+    if org_update.timezone is not None: org.timezone = org_update.timezone
+    if org_update.operating_hours is not None: org.operating_hours = org_update.operating_hours
+    if org_update.contact_info is not None: org.contact_info = org_update.contact_info
+    
+    db.commit()
+    db.refresh(org)
+    return org
+
 # -----------------
 # Departments
 # -----------------

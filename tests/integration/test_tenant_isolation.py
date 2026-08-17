@@ -205,8 +205,43 @@ def test_tenant_isolation(qdrant):
     # ...and must never leak A's data.
     assert "Org A Secret" not in texts_b
 
-    # Since each tenant only has one document, there should be exactly one hit.
     assert results_a[0][1]["organization_id"] == str(org_a)
     assert results_b[0][1]["organization_id"] == str(org_b)
     assert len(results_a) == 1
     assert len(results_b) == 1
+
+def test_qdrant_delete_isolation(qdrant):
+    org_a = uuid4()
+    org_b = uuid4()
+    doc = uuid4() # Same document ID for both (edge case)
+
+    vector = [0.1] * 3072
+
+    qdrant.upsert_chunks(
+        organization_id=org_a,
+        document_id=doc,
+        chunks=[{"text": "A", "metadata": {}}],
+        vectors=[vector]
+    )
+
+    qdrant.upsert_chunks(
+        organization_id=org_b,
+        document_id=doc,
+        chunks=[{"text": "B", "metadata": {}}],
+        vectors=[vector]
+    )
+
+    # Delete as A
+    qdrant.delete_document(org_a, doc)
+
+    import time
+    time.sleep(1) # wait for Qdrant to process
+
+    # Query as A
+    results_a = qdrant.search(org_a, vector, limit=10, threshold=0.0)
+    assert len(results_a) == 0
+
+    # Query as B
+    results_b = qdrant.search(org_b, vector, limit=10, threshold=0.0)
+    assert len(results_b) == 1
+    assert results_b[0][1]["text"] == "B"
