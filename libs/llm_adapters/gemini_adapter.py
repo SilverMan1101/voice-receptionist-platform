@@ -82,21 +82,6 @@ class GeminiAdapter(BaseLLMAdapter):
         # system_prompt goes in a separate config field instead)
         contents = []
 
-        if context:
-            # Inject knowledge context as an early "model-visible" user note,
-            # since Gemini has no equivalent of OpenAI's extra system message mid-list
-            contents.append(
-                types.Content(
-                    role="user",
-                    parts=[types.Part(text=f"[System note - Relevant Knowledge Context]\n{context}")]
-                )
-            )
-
-        # for turn in turns:
-        #     role = "user" if turn.speaker == "caller" else "model"
-        #     contents.append(
-        #         types.Content(role=role, parts=[types.Part(text=turn.text)])
-        #     )
         for turn in turns:
             if turn.speaker == "caller":
                 role = "user"
@@ -112,6 +97,25 @@ class GeminiAdapter(BaseLLMAdapter):
                 types.Content(role=role, parts=[types.Part(text=f"[System note: {turn.text}]" if turn.speaker not in ("caller", "ai") else turn.text)])
             )
 
+        if context:
+            # Inject knowledge context at the END of the conversation so the model knows
+            # the result of the tool it just called, instead of putting it at the beginning.
+            contents.append(
+                types.Content(
+                    role="user",
+                    parts=[types.Part(text=f"[System note - Relevant Knowledge Context]\n{context}")]
+                )
+            )
+
+        # Coalesce consecutive contents with the same role to prevent Gemini API errors
+        # about non-alternating user/model roles.
+        coalesced_contents = []
+        for content in contents:
+            if coalesced_contents and coalesced_contents[-1].role == content.role:
+                coalesced_contents[-1].parts.extend(content.parts)
+            else:
+                coalesced_contents.append(content)
+
         config = types.GenerateContentConfig(
             system_instruction=system_prompt,
             tools=[self.tools],
@@ -120,7 +124,7 @@ class GeminiAdapter(BaseLLMAdapter):
 
         response = self.client.models.generate_content(
             model=self.model_name,
-            contents=contents,
+            contents=coalesced_contents,
             config=config
         )
 
