@@ -33,6 +33,10 @@ const nextConfig = {
       {
         source: '/internal/:path*',
         destination: 'http://127.0.0.1:8003/internal/:path*'
+      },
+      {
+        source: '/api/v1/engine/:path*',
+        destination: 'http://127.0.0.1:8000/:path*'
       }
     ];
   }

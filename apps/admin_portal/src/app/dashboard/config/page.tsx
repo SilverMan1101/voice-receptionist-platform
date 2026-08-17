@@ -25,7 +25,7 @@ export default function ConfigPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Configuration</h1>
-        <p className="text-sm text-slate-500">Manage your organization's settings and rules.</p>
+        <p className="text-sm text-slate-500">Manage your organization&apos;s settings and rules.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -35,7 +35,7 @@ export default function ConfigPage() {
               <CardTitle>Profile Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <StepProfile org={org} onNext={() => {}} onUpdate={setOrg} />
+              <StepProfile org={org} standalone={true} onUpdate={setOrg} />
             </CardContent>
           </Card>
 
@@ -44,7 +44,7 @@ export default function ConfigPage() {
               <CardTitle>Operating Hours</CardTitle>
             </CardHeader>
             <CardContent>
-              <StepHours org={org} onNext={() => {}} onPrev={() => {}} onUpdate={setOrg} />
+              <StepHours org={org} standalone={true} onUpdate={setOrg} />
             </CardContent>
           </Card>
           
@@ -53,7 +53,7 @@ export default function ConfigPage() {
               <CardTitle>Voice Assistant</CardTitle>
             </CardHeader>
             <CardContent>
-              <StepVoice onNext={() => {}} onPrev={() => {}} />
+              <StepVoice standalone={true} />
             </CardContent>
           </Card>
         </div>
@@ -64,7 +64,7 @@ export default function ConfigPage() {
               <CardTitle>Departments</CardTitle>
             </CardHeader>
             <CardContent>
-              <StepDepartments onNext={() => {}} onPrev={() => {}} />
+              <StepDepartments standalone={true} />
             </CardContent>
           </Card>
 
@@ -73,7 +73,7 @@ export default function ConfigPage() {
               <CardTitle>Business Rules</CardTitle>
             </CardHeader>
             <CardContent>
-              <StepBusinessRules onNext={() => {}} onPrev={() => {}} />
+              <StepBusinessRules standalone={true} />
             </CardContent>
           </Card>
         </div>

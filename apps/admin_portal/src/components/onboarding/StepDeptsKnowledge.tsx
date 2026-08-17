@@ -5,7 +5,9 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import api from '@/lib/api';
 
-export function StepDepartments({ onNext, onPrev }: any) {
+import { Trash2 } from 'lucide-react';
+
+export function StepDepartments({ onNext, onPrev, standalone }: any) {
   const [departments, setDepartments] = useState<any[]>([]);
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
@@ -39,6 +41,15 @@ export function StepDepartments({ onNext, onPrev }: any) {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/v1/departments/${id}`);
+      fetchDepts();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to remove department');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
@@ -50,9 +61,14 @@ export function StepDepartments({ onNext, onPrev }: any) {
         ) : (
           <ul className="space-y-2">
             {departments.map((d: any) => (
-              <li key={d.id} className="text-sm bg-slate-50 p-2 rounded flex justify-between">
-                <span>{d.name}</span>
-                <span className="text-slate-500">{d.escalation_number}</span>
+              <li key={d.id} className="text-sm bg-slate-50 p-2 rounded flex justify-between items-center">
+                <div className="flex gap-4">
+                  <span className="font-medium">{d.name}</span>
+                  <span className="text-slate-500">{d.escalation_number}</span>
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(d.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </li>
             ))}
           </ul>
@@ -74,18 +90,20 @@ export function StepDepartments({ onNext, onPrev }: any) {
         <Button type="submit" size="sm" isLoading={isLoading}>Add Department</Button>
       </form>
 
-      <div className="pt-4 flex justify-between">
-        <Button variant="outline" type="button" onClick={onPrev}>Back</Button>
-        <Button onClick={onNext}>Next Step</Button>
-      </div>
+      {!standalone && (
+        <div className="pt-4 flex justify-between">
+          <Button variant="outline" type="button" onClick={onPrev}>Back</Button>
+          <Button onClick={onNext}>Save & Next</Button>
+        </div>
+      )}
     </div>
   );
 }
 
-export function StepBusinessRules({ onNext, onPrev }: any) {
+export function StepBusinessRules({ onNext, onPrev, standalone }: any) {
   const [rules, setRules] = useState<any[]>([]);
   const [ruleType, setRuleType] = useState('escalation');
-  const [condition, setCondition] = useState('intent == "speak_to_human"');
+  const [condition, setCondition] = useState('{"intent": "speak_to_human"}');
   const [action, setAction] = useState('{"type": "transfer", "department": "Sales"}');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -105,18 +123,47 @@ export function StepBusinessRules({ onNext, onPrev }: any) {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    
+    let parsedCondition;
+    let parsedAction;
+    try {
+      parsedCondition = JSON.parse(condition);
+    } catch {
+      setError('Invalid JSON in Condition field');
+      setIsLoading(false);
+      return;
+    }
+    try {
+      parsedAction = JSON.parse(action);
+    } catch {
+      setError('Invalid JSON in Action field');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await api.post('/v1/business-rules', {
         rule_type: ruleType,
-        condition: JSON.parse(condition),
-        action: JSON.parse(action),
+        condition: parsedCondition,
+        action: parsedAction,
         active: true
       });
       fetchRules();
+      setCondition('');
+      setAction('');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to add rule');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/v1/business-rules/${id}`);
+      fetchRules();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to remove rule');
     }
   };
 
@@ -131,8 +178,11 @@ export function StepBusinessRules({ onNext, onPrev }: any) {
         ) : (
           <ul className="space-y-2">
             {rules.map((r: any) => (
-              <li key={r.id} className="text-sm bg-slate-50 p-2 rounded">
-                <strong>{r.rule_type}</strong>: {JSON.stringify(r.condition)} &rarr; {JSON.stringify(r.action)}
+              <li key={r.id} className="text-sm bg-slate-50 p-2 rounded flex justify-between items-center">
+                <span><strong>{r.rule_type}</strong>: {JSON.stringify(r.condition)} &rarr; {JSON.stringify(r.action)}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(r.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </li>
             ))}
           </ul>
@@ -159,15 +209,17 @@ export function StepBusinessRules({ onNext, onPrev }: any) {
         <Button type="submit" size="sm" isLoading={isLoading}>Add Rule</Button>
       </form>
 
-      <div className="pt-4 flex justify-between">
-        <Button variant="outline" type="button" onClick={onPrev}>Back</Button>
-        <Button onClick={onNext}>Next Step</Button>
-      </div>
+      {!standalone && (
+        <div className="pt-4 flex justify-between">
+          <Button variant="outline" type="button" onClick={onPrev}>Back</Button>
+          <Button onClick={onNext}>Save & Next</Button>
+        </div>
+      )}
     </div>
   );
 }
 
-export function StepKnowledge({ onNext, onPrev }: any) {
+export function StepKnowledge({ onNext, onPrev, standalone }: any) {
   const [files, setFiles] = useState<any[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -234,10 +286,12 @@ export function StepKnowledge({ onNext, onPrev }: any) {
         <Button type="submit" size="sm" isLoading={isLoading} disabled={!file}>Upload File</Button>
       </form>
 
-      <div className="pt-4 flex justify-between">
-        <Button variant="outline" type="button" onClick={onPrev}>Back</Button>
-        <Button onClick={onNext}>Next Step</Button>
-      </div>
+      {!standalone && (
+        <div className="pt-4 flex justify-between">
+          <Button variant="outline" type="button" onClick={onPrev}>Back</Button>
+          <Button onClick={onNext}>Save & Next</Button>
+        </div>
+      )}
     </div>
   );
 }

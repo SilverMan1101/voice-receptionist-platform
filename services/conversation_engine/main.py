@@ -28,7 +28,7 @@ app = FastAPI(title="Conversation Engine API")
 # Initialize global dependencies for the Engine
 llm_adapter = GeminiAdapter(model_name="gemini-3.5-flash-lite")
 state_store = CallStateStore(redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
-knowledge_client = KnowledgeClient(base_url=os.environ.get("KNOWLEDGE_SERVICE_URL", "http://127.0.0.1:8001"))
+knowledge_client = KnowledgeClient(base_url=os.environ.get("KNOWLEDGE_SERVICE_URL", "http://127.0.0.1:8002"))
 
 # Mock rules for now since Tenant Config is partially mocked in this phase
 MOCK_RULES = [

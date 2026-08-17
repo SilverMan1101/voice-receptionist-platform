@@ -2,7 +2,7 @@ import sys
 import os
 from uuid import UUID
 from fastapi import FastAPI, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -53,9 +53,19 @@ def get_my_organization(
     token_data: schemas.TokenData = Depends(get_current_token_data),
     db: Session = Depends(get_db)
 ):
-    org = db.query(models.Organization).filter(models.Organization.id == token_data.organization_id).first()
+    org = db.query(models.Organization).options(
+        joinedload(models.Organization.voice_config),
+        joinedload(models.Organization.departments),
+        joinedload(models.Organization.business_rules)
+    ).filter(models.Organization.id == token_data.organization_id).first()
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
+    print(f"ORG RETURNED: {org.id}, VOICE_CONFIG: {org.voice_config}", flush=True)
+    try:
+        serialized = schemas.OrganizationResponse.model_validate(org)
+        print("SERIALIZED JSON:", serialized.model_dump_json(), flush=True)
+    except Exception as e:
+        print("SERIALIZATION ERROR:", e, flush=True)
     return org
 
 @app.put("/api/v1/organizations/me", response_model=schemas.OrganizationResponse)
@@ -104,6 +114,22 @@ def list_departments(
 ):
     return db.query(models.Department).filter(models.Department.organization_id == token_data.organization_id).all()
 
+@app.delete("/api/v1/departments/{department_id}")
+def delete_department(
+    department_id: UUID,
+    token_data: schemas.TokenData = Depends(get_current_token_data),
+    db: Session = Depends(get_db)
+):
+    db_dept = db.query(models.Department).filter(
+        models.Department.id == department_id,
+        models.Department.organization_id == token_data.organization_id
+    ).first()
+    if not db_dept:
+        raise HTTPException(status_code=404, detail="Department not found")
+    db.delete(db_dept)
+    db.commit()
+    return {"status": "success"}
+
 # -----------------
 # Business Rules
 # -----------------
@@ -131,6 +157,22 @@ def list_business_rules(
     db: Session = Depends(get_db)
 ):
     return db.query(models.BusinessRule).filter(models.BusinessRule.organization_id == token_data.organization_id).all()
+
+@app.delete("/api/v1/business-rules/{rule_id}")
+def delete_business_rule(
+    rule_id: UUID,
+    token_data: schemas.TokenData = Depends(get_current_token_data),
+    db: Session = Depends(get_db)
+):
+    db_rule = db.query(models.BusinessRule).filter(
+        models.BusinessRule.id == rule_id,
+        models.BusinessRule.organization_id == token_data.organization_id
+    ).first()
+    if not db_rule:
+        raise HTTPException(status_code=404, detail="Business rule not found")
+    db.delete(db_rule)
+    db.commit()
+    return {"status": "success"}
 
 # -----------------
 # Voice Config

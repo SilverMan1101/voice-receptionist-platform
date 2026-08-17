@@ -54,7 +54,7 @@ def main():
     orchestrator = ConversationOrchestrator(llm, state, knowledge_client, rules)
     
     call_id = str(uuid.uuid4())
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjAyMjkwOC05MzI4LTRhNGYtYTAwZC03OWJkM2ZhZTQ5NzQiLCJvcmdfaWQiOiJjNTU3MGFjZS1iMjk0LTQ0ZTktYjRlNi1hZmYyZWRhMTMwNGUiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3ODY5MDk2MjZ9.3Gbat6Q1Gmp7nNwu4RkwNLnE0_dnCRkfe-jV0fiwQYk"
+    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkYTEwYmI2Mi00MTc1LTRhMGMtOTM5YS1mNDA4MzQ5OGM1NDUiLCJvcmdfaWQiOiIzNWVjZDY1ZS1iM2M2LTQyYjctODNhOS00ZGU1NjFmYjliYmEiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3ODcwNzk3MTN9.9jQg7Pfql8Y7F_ywHZBKEk9fLdLSYvScxE_p0R2C2N8"
     
     print("\n--- Simulation Started ---")
     print("Type 'quit' or 'exit' to end the simulation.\n")

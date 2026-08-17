@@ -31,8 +31,7 @@ class DepartmentResponse(DepartmentBase):
     id: UUID
     organization_id: UUID
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 # VoiceConfig
 class VoiceConfigBase(BaseModel):
@@ -48,8 +47,7 @@ class VoiceConfigResponse(VoiceConfigBase):
     id: UUID
     organization_id: UUID
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 # BusinessRules
 class BusinessRuleBase(BaseModel):
@@ -65,8 +63,7 @@ class BusinessRuleResponse(BusinessRuleBase):
     id: UUID
     organization_id: UUID
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 # Organizations
 class OrganizationBase(BaseModel):
@@ -95,8 +92,7 @@ class OrganizationResponse(OrganizationBase):
     voice_config: Optional[VoiceConfigResponse] = None
     business_rules: List[BusinessRuleResponse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 # KnowledgeDocuments
 class KnowledgeDocumentBase(BaseModel):

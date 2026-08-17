@@ -99,20 +99,20 @@ async def twilio_webhook(request: Request):
     # twiml_response = twilio_adapter.generate_connect_response(stream_url)
     # return Response(content=twiml_response, media_type="application/xml")
     twiml = """<?xml version="1.0" encoding="UTF-8"?>
-    <Response>
-    <Connect>
+<Response>
+    <Start>
         <Stream
             url="wss://marina-poncho-avenging.ngrok-free.dev/internal/telephony/stream"
             statusCallback="https://marina-poncho-avenging.ngrok-free.dev/internal/telephony/stream-status"
             statusCallbackMethod="POST">
-
-            <Parameter
-                name="test"
-                value="voice-receptionist"/>
-
+            <Parameter name="test" value="voice-receptionist"/>
         </Stream>
-    </Connect>
-    </Response>"""
+    </Start>
+
+    <Say>Hello My name is Seema and I'm talking on behalf of ABC academy.</Say>
+
+    <Pause length="5"/>
+</Response>"""
 
     print("=== RETURNING STREAM TWIML ===")
     print(twiml)

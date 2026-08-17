@@ -4,8 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
 interface TokenPayload {
-  user_id: string;
-  organization_id: string;
+  sub: string;
+  org_id: string;
   role: string;
   exp: number;
 }

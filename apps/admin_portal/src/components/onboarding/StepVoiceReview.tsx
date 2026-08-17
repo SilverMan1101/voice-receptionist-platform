@@ -6,34 +6,32 @@ import { Input } from '../ui/Input';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
-export function StepVoice({ onNext, onPrev }: any) {
+export function StepVoice({ onNext, onPrev, standalone, isLastStep }: any) {
   const [greeting, setGreeting] = useState('Hello, how can I help you today?');
   const [voiceId, setVoiceId] = useState('alloy');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setSuccess('');
     try {
-      await api.put('/v1/organizations/me/voice-config', {
+      await api.put('/v1/voice-config', {
         voice_id: voiceId,
         greeting_text: greeting,
         language: 'en',
         tone: 'professional'
       });
-      onNext();
-    } catch (err: any) {
-      // The endpoint is actually /api/v1/voice-config, wait, let me double check the endpoint
-      try {
-        await api.put('/v1/organizations/voice-config', {
-           voice_id: voiceId, greeting_text: greeting, language: 'en', tone: 'professional'
-        });
-        onNext();
-      } catch (err2) {
-        setError('Failed to update voice config');
+      if (standalone) {
+        setSuccess('Voice configuration updated successfully!');
+        setTimeout(() => setSuccess(''), 3000);
       }
+      if (onNext) onNext();
+    } catch (err: any) {
+      setError('Failed to update voice config');
     } finally {
       setIsLoading(false);
     }
@@ -42,6 +40,7 @@ export function StepVoice({ onNext, onPrev }: any) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
+      {success && <div className="text-green-600 text-sm font-medium bg-green-50 p-2 rounded">{success}</div>}
       <div className="space-y-2">
         <label className="text-sm font-medium">Greeting Text</label>
         <Input required value={greeting} onChange={e => setGreeting(e.target.value)} />
@@ -57,9 +56,9 @@ export function StepVoice({ onNext, onPrev }: any) {
           <option value="nova">Nova (Female)</option>
         </select>
       </div>
-      <div className="pt-4 flex justify-between">
-        <Button variant="outline" type="button" onClick={onPrev}>Back</Button>
-        <Button type="submit" isLoading={isLoading}>Save & Next</Button>
+      <div className={`pt-4 flex ${standalone ? 'justify-start' : 'justify-between'}`}>
+        {!standalone && <Button variant="outline" type="button" onClick={onPrev}>Back</Button>}
+        <Button type="submit" isLoading={isLoading}>{standalone ? 'Save Changes' : (isLastStep ? 'Save & Finish' : 'Save & Next')}</Button>
       </div>
     </form>
   );

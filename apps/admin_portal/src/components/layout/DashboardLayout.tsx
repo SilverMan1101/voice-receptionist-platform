@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '../ui/Button';
-import { LayoutDashboard, PhoneCall, BookOpen, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, PhoneCall, BookOpen, Settings, LogOut, Menu, X, Headphones, MessageSquare } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -34,8 +34,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Call History', href: '/dashboard/calls', icon: PhoneCall },
     { name: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
+    { name: 'Test Assistant', href: '/dashboard/simulator', icon: MessageSquare },
     { name: 'Configuration', href: '/dashboard/config', icon: Settings },
   ];
+
+  // Helper to capitalize role
+  const formatRole = (role?: string) => {
+    if (!role) return 'User';
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -53,8 +60,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 shrink-0 items-center px-6 border-b border-slate-100">
-          <span className="text-xl font-bold tracking-tight text-slate-900">Platform Admin</span>
+        <div className="flex h-16 shrink-0 items-center px-6 border-b border-slate-100 gap-2">
+          <div className="bg-blue-600 p-1.5 rounded-md">
+            <Headphones className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-bold tracking-tight text-slate-900">AI Receptionist</span>
         </div>
         
         <div className="flex flex-1 flex-col overflow-y-auto px-4 py-6">
@@ -89,8 +99,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           
           <div className="mt-8 border-t border-slate-100 pt-6">
             <div className="px-3 mb-4">
-              <p className="text-sm font-medium text-slate-900 truncate">Admin User</p>
-              <p className="text-xs text-slate-500 truncate mt-1">Role: {payload?.role}</p>
+              <p className="text-sm font-medium text-slate-900 truncate">Team Member</p>
+              <p className="text-xs text-slate-500 truncate mt-1">Role: {formatRole(payload?.role)}</p>
             </div>
             <button
               onClick={logout}
