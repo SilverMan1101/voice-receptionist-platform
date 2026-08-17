@@ -72,7 +72,12 @@ flowchart TD
 ```
 ai-receptionist-platform/
 ├── apps/
-│   ├── admin_portal/                # Frontend web app (React/Next.js — see Design.md)
+│   ├── admin_portal/                # Frontend web app (React/Next.js/Tailwind/shadcn)
+│   │   ├── src/
+│   │   │   ├── app/                 # Next.js App Router pages
+│   │   │   ├── components/          # Reusable UI components
+│   │   │   ├── lib/                 # Utilities and API clients
+│   │   │   └── hooks/               # React hooks
 │   └── voice_runtime/                # Real-time call handling process(es)
 ├── services/
 │   ├── auth_service/                 # Custom JWT auth
@@ -132,7 +137,7 @@ ai-receptionist-platform/
 | Object storage | S3-compatible | Call recordings, uploaded documents |
 | Containerization | Docker, Docker Compose | Local dev + baseline deployment |
 | Reverse proxy | Nginx | TLS termination, routing |
-| Frontend (Admin Portal) | React (Next.js recommended — Assumption) | See `Design.md` |
+| Frontend (Admin Portal) | React (Next.js) + Tailwind + shadcn/ui | See `Design.md` |
 | Messaging/Event Bus | Redis Streams (MVP) → Kafka/RabbitMQ (scale) | Assumption: start simple, graduate under load |
 | Observability | OpenTelemetry + Prometheus/Grafana + structured JSON logs | Assumption |
 | Authentication | Custom JWT Auth Service | Issuing and validating tenant-scoped tokens |

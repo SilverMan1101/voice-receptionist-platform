@@ -1,24 +1,42 @@
-import websocket
+import asyncio
+import websockets
+import json
 
-url = "wss://marina-poncho-avenging.ngrok-free.dev/internal/telephony/stream"
 
-print("Connecting to:", url)
+async def test():
+    url = "wss://marina-poncho-avenging.ngrok-free.dev/internal/telephony/stream"
 
-try:
-    ws = websocket.create_connection(
-        url,
-        timeout=10
-    )
+    print("Connecting to:", url)
 
-    print("CONNECTED!")
+    async with websockets.connect(url) as websocket:
+        print("WEBSOCKET CONNECTED!")
 
-    ws.send("hello")
+        await websocket.send(json.dumps({
+            "event": "connected",
+            "protocol": "Call",
+            "version": "1.0"
+        }))
 
-    message = ws.recv()
-    print("Received:", message)
+        await websocket.send(json.dumps({
+            "event": "start",
+            "start": {
+                "callSid": "TEST_CALL",
+                "streamSid": "TEST_STREAM",
+                "tracks": ["inbound"],
+                "mediaFormat": {
+                    "encoding": "audio/x-mulaw",
+                    "sampleRate": 8000,
+                    "channels": 1
+                },
+                "customParameters": {
+                    "test": "voice-receptionist"
+                }
+            }
+        }))
 
-    ws.close()
+        await asyncio.sleep(2)
 
-except Exception as e:
-    print("WEBSOCKET ERROR:")
-    print(repr(e))
+        print("Closing...")
+
+
+asyncio.run(test())

@@ -91,6 +91,7 @@
 - Legal/consent requirements for call recording vary by jurisdiction and are not yet researched per target region.
 - Billing/pricing model for tenants is undefined.
 - Brand identity (colors, typeface, logo) undefined — `Design.md` uses placeholder tokens.
+- **Role Mismatch**: The UI design (`Design.md`) assumes 4 roles (Owner, Admin, Staff, Analyst), but the `auth_service` `User` model only implements `platform_operator`, `admin`, and `staff`. The `Owner` and `Analyst` roles are missing from the backend and need to be added in a future phase.
 
 ## 9. Pending Decisions (See each document's "Open Questions" section for full detail)
 
@@ -139,6 +140,7 @@ All assumptions are individually labeled with an ID (A1–A5 in `PRD.md`) or cal
 - The original project brief was provided as a single detailed document (v1 vision) and used as the **sole source of truth** for generating the full documentation set (`PRD.md`, `Architecture.md`, `Rules.md`, `Phases.md`, `Design.md`, `Memory.md`) in this session.
 - All six documents were generated together in one pass, cross-checked for internal consistency (terminology, phase-to-architecture alignment, design-to-PRD alignment).
 - Any assumption made beyond the original brief is explicitly labeled as such in the relevant document — future sessions should treat unlabeled statements as either directly sourced from the brief or a documented decision, not implicit assumptions.
+- **Phase 5 built ahead of Phase 4**: Phase 5 (Admin Portal) was intentionally built before Phase 4 (Recording/Summaries/Escalation Handoff). Consequently, the Call History view uses mock data placeholders for `recording_url`, `CallSummary`, and `CallTurn` (transcripts), as those entities are not yet populated into Postgres by the EventBus.
 
 ## 15. How to Use This Documentation Set Going Forward
 

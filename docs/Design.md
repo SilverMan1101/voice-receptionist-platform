@@ -139,7 +139,7 @@ Core reusable components (build once, reuse everywhere):
 - Empty State illustration + message
 - Confidence/Source Citation chip (shown next to AI answers in transcripts, e.g. "Source: Pricing.pdf, p.2")
 
-> **Assumption:** React (Next.js) + a utility-first CSS approach (Tailwind) with a small custom component layer, rather than adopting a heavy pre-built admin template, to keep the brand distinct — final decision open, see `Architecture.md` §4.
+> **Decision:** React (Next.js) + Tailwind CSS + shadcn/ui components, rather than adopting a heavy pre-built admin template, to keep the brand distinct.
 
 ## 9. Typography
 

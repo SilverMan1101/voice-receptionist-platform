@@ -99,20 +99,17 @@ async def twilio_webhook(request: Request):
     # twiml_response = twilio_adapter.generate_connect_response(stream_url)
     # return Response(content=twiml_response, media_type="application/xml")
     twiml = """<?xml version="1.0" encoding="UTF-8"?>
-    <Response>
-    <Connect>
-        <Stream
-            url="wss://marina-poncho-avenging.ngrok-free.dev/internal/telephony/stream"
-            statusCallback="https://marina-poncho-avenging.ngrok-free.dev/internal/telephony/stream-status"
-            statusCallbackMethod="POST">
-
-            <Parameter
-                name="test"
-                value="voice-receptionist"/>
-
+<Response>
+    <Start>
+        <Stream url="wss://marina-poncho-avenging.ngrok-free.dev/internal/telephony/stream">
+            <Parameter name="test" value="voice-receptionist"/>
         </Stream>
-    </Connect>
-    </Response>"""
+    </Start>
+
+    <Say>WebSocket test connected.</Say>
+
+    <Pause length="30"/>
+</Response>"""
 
     print("=== RETURNING STREAM TWIML ===")
     print(twiml)
@@ -147,202 +144,118 @@ async def write_mulaw_to_wav(mulaw_bytes: bytes) -> bytes:
         wav_file.writeframes(pcm_data)
     return wav_io.getvalue()
 
-# @app.websocket("/internal/telephony/stream")
-# async def twilio_stream(websocket: WebSocket):
-#     await websocket.accept()
-    
-#     stream_sid = None
-#     call_sid = None
-#     org_id = "test-org"  # In a real app, resolved from the dialed phone number
-#     token = "test-token"
-    
-#     audio_buffer = bytearray()
-#     silence_frames = 0
-#     is_speaking = False
-    
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             message = json.loads(data)
-            
-#             if message["event"] == "start":
-#                 stream_sid = message["start"]["streamSid"]
-#                 call_sid = message["start"]["callSid"]
-#                 print(f"Started stream for Call: {call_sid}")
-                
-#             elif message["event"] == "media":
-#                 payload = message["media"]["payload"]
-#                 audio_chunk = base64.b64decode(payload)
-                
-#                 # Simple VAD (Amplitude-based)
-#                 pcm_chunk = audioop.ulaw2lin(audio_chunk, 2)
-#                 max_amp = audioop.max(pcm_chunk, 2)
-                
-#                 if max_amp > 1000: # Threshold for speech
-#                     is_speaking = True
-#                     silence_frames = 0
-#                     audio_buffer.extend(audio_chunk)
-#                 elif is_speaking:
-#                     silence_frames += 1
-#                     audio_buffer.extend(audio_chunk)
-                    
-#                     # 50 frames of silence (approx 1 second at 50 packets/sec typical) -> end of utterance
-#                     if silence_frames > 50:
-#                         is_speaking = False
-                        
-#                         if len(audio_buffer) > 8000: # At least 1 sec of audio
-#                             # Process turn
-#                             wav_data = await write_mulaw_to_wav(bytes(audio_buffer))
-                            
-#                             # Transcribe (Buffered STT approach)
-#                             try:
-#                                 text = await stt_adapter.transcribe(wav_data, mime_type="audio/wav")
-#                             except Exception as e:
-#                                 print(f"STT Error: {e}")
-#                                 text = ""
-                                
-#                             audio_buffer.clear()
-                            
-#                             if text:
-#                                 print(f"Caller said: {text}")
-#                                 # Call Conversation Engine
-#                                 async with httpx.AsyncClient() as client:
-#                                     try:
-#                                         resp = await client.post(CONVERSATION_ENGINE_URL, json={
-#                                             "call_id": call_sid,
-#                                             "organization_id": org_id,
-#                                             "token": token,
-#                                             "user_text": text
-#                                         })
-#                                         resp.raise_for_status()
-#                                         turn_resp = resp.json()
-                                        
-#                                         reply_text = turn_resp.get("text")
-#                                         if reply_text:
-#                                             # Synthesize TTS
-#                                             tts_bytes = await tts_adapter.synthesize(reply_text)
-#                                             mulaw_out = await convert_tts_to_mulaw(tts_bytes)
-                                            
-#                                             # Stream back in chunks
-#                                             chunk_size = 320 # 20ms chunks
-#                                             for i in range(0, len(mulaw_out), chunk_size):
-#                                                 chunk = mulaw_out[i:i+chunk_size]
-#                                                 out_payload = base64.b64encode(chunk).decode("utf-8")
-#                                                 await websocket.send_text(json.dumps({
-#                                                     "event": "media",
-#                                                     "streamSid": stream_sid,
-#                                                     "media": {"payload": out_payload}
-#                                                 }))
-#                                                 await asyncio.sleep(0.02) # throttle to real-time
-                                                
-#                                         if turn_resp.get("action") == "end_call":
-#                                             # Not implemented: hangup via REST API
-#                                             pass
-                                            
-#                                     except Exception as e:
-#                                         print(f"Engine/TTS Error: {e}")
-#                                         # Graceful fallback per PRD
-#                                         fallback_text = "I'm having trouble accessing that information. Transferring you."
-#                                         tts_bytes = await tts_adapter.synthesize(fallback_text)
-#                                         mulaw_out = await convert_tts_to_mulaw(tts_bytes)
-#                                         out_payload = base64.b64encode(mulaw_out).decode("utf-8")
-#                                         await websocket.send_text(json.dumps({
-#                                             "event": "media",
-#                                             "streamSid": stream_sid,
-#                                             "media": {"payload": out_payload}
-#                                         }))
-                                        
-#                         audio_buffer.clear()
-                
-#             elif message["event"] == "stop":
-#                 print(f"Stream stopped for Call: {call_sid}")
-#                 break
-                
-#     except WebSocketDisconnect:
-#         print(f"WebSocket disconnected for Call: {call_sid}")
-#     except Exception as e:
-#         print(f"WebSocket stream error: {e}")
-
-
-
-
 @app.websocket("/internal/telephony/stream")
 async def twilio_stream(websocket: WebSocket):
-    print("=== WEBSOCKET CONNECTION ATTEMPT ===")
-
-    print("Client:", websocket.client)
-    print("Headers:", dict(websocket.headers))
-
     await websocket.accept()
-
-    print("=== TWILIO MEDIA STREAM CONNECTED ===")
-
+    
+    stream_sid = None
+    call_sid = None
+    org_id = "test-org"  # In a real app, resolved from the dialed phone number
+    token = "test-token"
+    
+    audio_buffer = bytearray()
+    silence_frames = 0
+    is_speaking = False
+    
     try:
         while True:
-            message = await websocket.receive_text()
-
-            print("=== TWILIO WS MESSAGE ===")
-            print(message)
-
-            try:
-                data = json.loads(message)
-            except json.JSONDecodeError:
-                print("Not JSON")
-                continue
-
-            event = data.get("event")
-
-            print("Event:", event)
-
-            if event == "connected":
-                print("=== TWILIO CONNECTED EVENT ===")
-
-            elif event == "start":
-                print("=== TWILIO START EVENT ===")
-
-                start = data.get("start", {})
-
-                print("Call SID:", start.get("callSid"))
-                print("Stream SID:", start.get("streamSid"))
-                print("Tracks:", start.get("tracks"))
-                print("Media format:", start.get("mediaFormat"))
-                print("Custom parameters:", start.get("customParameters"))
-
-            elif event == "media":
-                media = data.get("media", {})
-
-                payload = media.get("payload", "")
-
-                print(
-                    "=== AUDIO MEDIA ===",
-                    "track=", media.get("track"),
-                    "chunk=", media.get("chunk"),
-                    "timestamp=", media.get("timestamp"),
-                    "payload_bytes=", len(payload),
-                )
-
-            elif event == "stop":
-                print("=== TWILIO STOP EVENT ===")
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            
+            if message["event"] == "start":
+                stream_sid = message["start"]["streamSid"]
+                call_sid = message["start"]["callSid"]
+                print(f"Started stream for Call: {call_sid}")
+                
+            elif message["event"] == "media":
+                payload = message["media"]["payload"]
+                audio_chunk = base64.b64decode(payload)
+                
+                # Simple VAD (Amplitude-based)
+                pcm_chunk = audioop.ulaw2lin(audio_chunk, 2)
+                max_amp = audioop.max(pcm_chunk, 2)
+                
+                if max_amp > 1000: # Threshold for speech
+                    is_speaking = True
+                    silence_frames = 0
+                    audio_buffer.extend(audio_chunk)
+                elif is_speaking:
+                    silence_frames += 1
+                    audio_buffer.extend(audio_chunk)
+                    
+                    # 50 frames of silence (approx 1 second at 50 packets/sec typical) -> end of utterance
+                    if silence_frames > 50:
+                        is_speaking = False
+                        
+                        if len(audio_buffer) > 8000: # At least 1 sec of audio
+                            # Process turn
+                            wav_data = await write_mulaw_to_wav(bytes(audio_buffer))
+                            
+                            # Transcribe (Buffered STT approach)
+                            try:
+                                text = await stt_adapter.transcribe(wav_data, mime_type="audio/wav")
+                            except Exception as e:
+                                print(f"STT Error: {e}")
+                                text = ""
+                                
+                            audio_buffer.clear()
+                            
+                            if text:
+                                print(f"Caller said: {text}")
+                                # Call Conversation Engine
+                                async with httpx.AsyncClient() as client:
+                                    try:
+                                        resp = await client.post(CONVERSATION_ENGINE_URL, json={
+                                            "call_id": call_sid,
+                                            "organization_id": org_id,
+                                            "token": token,
+                                            "user_text": text
+                                        })
+                                        resp.raise_for_status()
+                                        turn_resp = resp.json()
+                                        
+                                        reply_text = turn_resp.get("text")
+                                        if reply_text:
+                                            # Synthesize TTS
+                                            tts_bytes = await tts_adapter.synthesize(reply_text)
+                                            mulaw_out = await convert_tts_to_mulaw(tts_bytes)
+                                            
+                                            # Stream back in chunks
+                                            chunk_size = 320 # 20ms chunks
+                                            for i in range(0, len(mulaw_out), chunk_size):
+                                                chunk = mulaw_out[i:i+chunk_size]
+                                                out_payload = base64.b64encode(chunk).decode("utf-8")
+                                                await websocket.send_text(json.dumps({
+                                                    "event": "media",
+                                                    "streamSid": stream_sid,
+                                                    "media": {"payload": out_payload}
+                                                }))
+                                                await asyncio.sleep(0.02) # throttle to real-time
+                                                
+                                        if turn_resp.get("action") == "end_call":
+                                            # Not implemented: hangup via REST API
+                                            pass
+                                            
+                                    except Exception as e:
+                                        print(f"Engine/TTS Error: {e}")
+                                        # Graceful fallback per PRD
+                                        fallback_text = "I'm having trouble accessing that information. Transferring you."
+                                        tts_bytes = await tts_adapter.synthesize(fallback_text)
+                                        mulaw_out = await convert_tts_to_mulaw(tts_bytes)
+                                        out_payload = base64.b64encode(mulaw_out).decode("utf-8")
+                                        await websocket.send_text(json.dumps({
+                                            "event": "media",
+                                            "streamSid": stream_sid,
+                                            "media": {"payload": out_payload}
+                                        }))
+                                        
+                        audio_buffer.clear()
+                
+            elif message["event"] == "stop":
+                print(f"Stream stopped for Call: {call_sid}")
                 break
-
-            else:
-                print("Unknown event:", event)
-
-    except WebSocketDisconnect as e:
-        print(f"=== TWILIO MEDIA STREAM DISCONNECTED: {e.code} ===")
-
+                
+    except WebSocketDisconnect:
+        print(f"WebSocket disconnected for Call: {call_sid}")
     except Exception as e:
-        print("=== TWILIO MEDIA STREAM ERROR ===")
-        print(repr(e))
-
-
-
-@app.post("/internal/telephony/stream-status")
-async def stream_status(request: Request):
-    form_data = await request.form()
-
-    print("=== STREAM STATUS ===")
-    print(dict(form_data))
-    print("=====================")
-
-    return {"status": "ok"}
+        print(f"WebSocket stream error: {e}")
