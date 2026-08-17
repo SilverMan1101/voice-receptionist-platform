@@ -157,6 +157,37 @@ def query_knowledge(
     
     return QueryResponse(results=results)
 
+@app.get("/api/v1/knowledge", response_model=List[schemas.KnowledgeDocumentResponse])
+def list_knowledge(
+    token_data: schemas.TokenData = Depends(get_current_token_data),
+    db: Session = Depends(get_db)
+):
+    return db.query(models.KnowledgeDocument).filter(
+        models.KnowledgeDocument.organization_id == token_data.organization_id
+    ).all()
+
+@app.delete("/api/v1/knowledge/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_knowledge(
+    document_id: str,
+    token_data: schemas.TokenData = Depends(get_current_token_data),
+    db: Session = Depends(get_db)
+):
+    doc = db.query(models.KnowledgeDocument).filter(
+        models.KnowledgeDocument.id == document_id,
+        models.KnowledgeDocument.organization_id == token_data.organization_id
+    ).first()
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+        
+    # Delete from Qdrant
+    qdrant.delete_document(token_data.organization_id, doc.id)
+    
+    # Delete from DB
+    db.delete(doc)
+    db.commit()
+    return None
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "knowledge_service"}

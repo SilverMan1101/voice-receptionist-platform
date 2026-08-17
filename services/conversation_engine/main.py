@@ -1,8 +1,19 @@
 import os
 import uuid
-from typing import Optional
-from fastapi import FastAPI, HTTPException, Request
+from typing import Optional, List
+from fastapi import FastAPI, HTTPException, Request, Depends
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from libs.llm_adapters.gemini_adapter import GeminiAdapter
+from services.conversation_engine.infrastructure.redis_store import CallStateStore
+from services.conversation_engine.infrastructure.knowledge_client import KnowledgeClient
+from services.conversation_engine.application.orchestrator import ConversationOrchestrator
+from services.shared_kernel.domain.schemas import BusinessRuleResponse
+from services.shared_kernel.core.database import get_db
+from services.shared_kernel.domain import models, schemas
+from libs.auth.jwt_validator import get_current_token_data
+from dotenv import load_dotenv
 
 from libs.llm_adapters.gemini_adapter import GeminiAdapter
 from services.conversation_engine.infrastructure.redis_store import CallStateStore
@@ -79,3 +90,28 @@ async def process_turn(request: TurnRequest):
             text="I'm sorry, I'm experiencing technical difficulties. Transferring you now.",
             reason="internal_error"
         )
+
+@app.get("/api/v1/calls", response_model=List[schemas.CallResponse])
+def list_calls(
+    token_data: schemas.TokenData = Depends(get_current_token_data),
+    db: Session = Depends(get_db)
+):
+    return db.query(models.Call).filter(
+        models.Call.organization_id == token_data.organization_id
+    ).order_by(models.Call.started_at.desc()).all()
+
+@app.get("/api/v1/calls/{call_id}", response_model=schemas.CallDetailResponse)
+def get_call_detail(
+    call_id: str,
+    token_data: schemas.TokenData = Depends(get_current_token_data),
+    db: Session = Depends(get_db)
+):
+    call = db.query(models.Call).filter(
+        models.Call.id == call_id,
+        models.Call.organization_id == token_data.organization_id
+    ).first()
+    
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
+        
+    return call

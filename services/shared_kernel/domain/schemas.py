@@ -137,6 +137,14 @@ class CallResponse(CallBase):
     class Config:
         orm_mode = True
 
+class CallDetailResponse(CallResponse):
+    turns: List['CallTurnResponse'] = []
+    escalation: Optional['EscalationResponse'] = None
+    collected_info: List['CollectedInfoResponse'] = []
+
+    class Config:
+        orm_mode = True
+
 # CallTurns
 class CallTurnBase(BaseModel):
     turn_index: int

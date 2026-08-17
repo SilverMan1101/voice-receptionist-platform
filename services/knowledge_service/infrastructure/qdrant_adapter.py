@@ -115,3 +115,21 @@ class QdrantAdapter:
             ret.append((r.score, r.payload, is_confident))
             
         return ret
+
+    def delete_document(self, organization_id: UUID, document_id: UUID):
+        filter_org_doc = qmodels.Filter(
+            must=[
+                qmodels.FieldCondition(
+                    key="organization_id",
+                    match=qmodels.MatchValue(value=str(organization_id)),
+                ),
+                qmodels.FieldCondition(
+                    key="document_id",
+                    match=qmodels.MatchValue(value=str(document_id)),
+                )
+            ]
+        )
+        self.client.delete(
+            collection_name=self.collection_name,
+            points_selector=qmodels.FilterSelector(filter=filter_org_doc)
+        )

@@ -48,7 +48,7 @@ flowchart TD
 |---|---|
 | **Telephony Gateway Adapter** | Abstracts the telephony provider (SIP/PSTN bridging, call control, media streaming). |
 | **Speech-to-Text (STT) Service** | Streaming transcription of caller audio. Provider-agnostic adapter (Whisper, Deepgram). |
-| **Conversation Engine** | Core orchestrator. Owns call state, turn management, intent detection, tool routing, escalation decisions, interruption handling. The LLM is a subordinate reasoning tool it calls — never the controller. Exposes a strict tool-calling contract: `retrieve_knowledge`, `collect_caller_info`, `trigger_escalation`, `end_call`. |
+| **Conversation Engine** | Core orchestrator. Owns call state, turn management, intent detection, tool routing, escalation decisions, interruption handling. Also owns Call/CallTurn historical data retrieval (Call History API). The LLM is a subordinate reasoning tool it calls — never the controller. Exposes a strict tool-calling contract: `retrieve_knowledge`, `collect_caller_info`, `trigger_escalation`, `end_call`. |
 | **LLM Adapter Layer** | Uniform interface (implemented via OpenAI SDK) for reasoning and response generation; supports strict function/tool calling and structured outputs. |
 | **Knowledge Retrieval Service (RAG)** | Embeds queries, performs vector search scoped to the tenant, returns ranked context chunks with source citations and confidence scores. |
 | **Ingestion & Embedding Pipeline** | Parses uploaded documents (PDF/DOCX/TXT/MD/CSV/XLSX/JSON/URLs), chunks, embeds, writes to the tenant's vector namespace; re-indexes on update/delete. |
@@ -269,8 +269,8 @@ All APIs are versioned (`/api/v1/...`), tenant-scoped by auth context, and follo
 | `DELETE` | `/api/v1/organizations/{id}/knowledge/{docId}` | Remove a document (triggers re-index) |
 | `PUT` | `/api/v1/organizations/{id}/voice-config` | Configure greeting, voice, language, tone |
 | `POST` | `/api/v1/organizations/{id}/business-rules` | Create/update an escalation or routing rule |
-| `GET` | `/api/v1/organizations/{id}/calls` | List call history (filterable) |
-| `GET` | `/api/v1/organizations/{id}/calls/{callId}` | Call detail: transcript, summary, recording link |
+| `GET` | `/api/v1/calls` | List call history (filterable) — served by Conversation Engine |
+| `GET` | `/api/v1/calls/{callId}` | Call detail: transcript, summary, recording link — served by Conversation Engine |
 | `GET` | `/api/v1/organizations/{id}/analytics` | Aggregated analytics for a date range |
 | `POST` | `/api/v1/auth/login` | Login and issue Custom JWT |
 | `POST` | `/internal/telephony/webhook` | Inbound call event from telephony provider (not tenant-scoped directly; resolved via phone number → org mapping) |

@@ -79,6 +79,48 @@ This project has a full documentation set in `/docs`. **Read these before any ta
 - Every new dependency must be added to `requirements.txt` in the same
   change that introduces it — never left as an ad hoc local install.
 
+## Definition of done for UI / frontend work
+
+This exists because a prior Phase 5 attempt was marked complete in
+task.md while multiple screens were literally placeholder text ("X form
+will go here") instead of real implementation, there was no login page
+at all despite auth_service being real, and a Dashboard showed fake
+numbers with zero disclosure — none of which was caught until the user
+opened a browser and checked by hand. That must never happen again.
+
+- A screen or component is NOT "built" or "[x]" if it contains any
+  placeholder text describing what it will do instead of the real
+  implementation (e.g. "X form will go here", "Connects to Y service" as
+  literal rendered text). Every checked-off UI deliverable must be the
+  real, working thing — wired to the real backend API it's supposed to
+  call — not a stub, regardless of how minor it seems.
+- If a genuine reason exists to defer part of a UI deliverable (e.g. a
+  real upstream dependency doesn't exist yet, like Phase 4's recording
+  data during Phase 5), that specific piece must be handled exactly like
+  the approved mock/real data boundary pattern: an obviously-labeled,
+  clearly-disabled placeholder the user cannot mistake for working
+  functionality — never silently mark the parent task complete while it
+  contains an unbuilt piece.
+- Never add fake/illustrative data (dashboard metrics, sample rows, demo
+  numbers) to any screen without it being explicitly disclosed as fake in
+  the walkthrough AND obviously labeled in the UI itself. Undisclosed
+  fake data presented as if real is a critical-severity violation of this
+  rule, not a minor gap.
+- Never add a feature, screen, or element that was not part of the
+  approved plan (e.g. an unrequested Dashboard) without flagging it as an
+  addition and getting confirmation — scope additions are not "extra
+  helpfulness," they're untracked, unreviewed surface area.
+- Before marking any UI task complete in task.md, actually click through
+  it end-to-end in a running browser against the real backend — not just
+  confirm the code compiles or a component test passes. If auth is
+  involved, actually log in as a real user via the real login flow before
+  claiming RBAC or any authenticated behavior works.
+- A walkthrough claiming a feature "works" or is "complete" must be
+  something the user can independently verify by clicking through the
+  running app themselves — if a screen only has a screenshot for part of
+  a multi-step flow (e.g. 2 of 6 wizard steps), that flow is not done,
+  regardless of what task.md says.
+
 ## Git workflow
 
 - Never commit or push directly to `main`. `main` is protected per `docs/Rules.md` §8.
